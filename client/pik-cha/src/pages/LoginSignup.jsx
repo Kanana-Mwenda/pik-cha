@@ -1,6 +1,6 @@
-import React, {useState} from 'react'
+import React, { useState } from 'react';
 import { FaUser, FaLock, FaEnvelope } from "react-icons/fa";
-import bgImage from '../assets/bg.webp';
+import bgImage from '../assets/bg2.jpeg';
 import '../index.css';
 
 const LoginSignup = () => {

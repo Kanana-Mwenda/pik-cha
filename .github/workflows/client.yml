@@ -30,3 +30,7 @@ jobs:
       - name: Build Project
         working-directory: pik-cha
         run: npm run build
+
+      - name: Trigger Render Frontend Deploy
+        run: |
+        curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_CLIENT }}

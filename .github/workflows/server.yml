@@ -32,3 +32,7 @@ jobs:
       - name: Check Flask Version
         working-directory: server
         run: pipenv run flask --version
+
+      - name: Trigger Render Backend Deploy
+        run: |
+        curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_SERVER }}

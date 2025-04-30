@@ -1,0 +1,38 @@
+name: Server CI/CD
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - 'server/**'
+  pull_request:
+    paths:
+      - 'server/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Pipenv and Dependencies
+        working-directory: server
+        run: |
+          pip install pipenv
+          pipenv install --dev
+
+      - name: Check Flask Version
+        working-directory: server
+        run: pipenv run flask --version
+
+      - name: Trigger Render Backend Deploy
+        run: |
+        curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_SERVER }}

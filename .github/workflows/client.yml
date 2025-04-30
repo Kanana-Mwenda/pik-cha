@@ -1,0 +1,36 @@
+name: Client CI/CD
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - 'pik-cha/**'
+  pull_request:
+    paths:
+      - 'pik-cha/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        working-directory: pik-cha
+        run: npm install
+
+      - name: Build Project
+        working-directory: pik-cha
+        run: npm run build
+
+      - name: Trigger Render Frontend Deploy
+        run: |
+        curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_CLIENT }}

@@ -3,7 +3,7 @@ name: Server CI/CD
 on:
   push:
     branches:
-      - main
+      - dev
     paths:
       - 'server/**'
   pull_request:

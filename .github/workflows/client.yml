@@ -3,7 +3,7 @@ name: Client CI/CD
 on:
   push:
     branches:
-      - main
+      - dev
     paths:
       - 'pik-cha/**'
   pull_request:

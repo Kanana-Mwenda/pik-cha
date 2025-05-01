@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import { TbLibraryPhoto } from "react-icons/tb";
 import { CiMenuKebab } from "react-icons/ci";
 import { FiLink, FiClipboard } from "react-icons/fi";
+import bgImage from '../assets/bglanding.png';
+
 import '../index.css';
 
 const Home = () => {
@@ -10,20 +12,15 @@ const Home = () => {
   const [urlModalVisible, setUrlModalVisible] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const fileInputRef = useRef(null);
+  const editorRef = useRef(null);
 
-  const handleOpenImageClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
+  const handleOpenImageClick = () => fileInputRef.current?.click();
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
-    if (file && file.type.startsWith('image/')) {
+    if (file?.type.startsWith('image/')) {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setSelectedImage(e.target.result);
-      };
+      reader.onload = (e) => setSelectedImage(e.target.result);
       reader.readAsDataURL(file);
     }
   };
@@ -37,18 +34,14 @@ const Home = () => {
     event.preventDefault();
     event.stopPropagation();
     const file = event.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
+    if (file?.type.startsWith('image/')) {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setSelectedImage(e.target.result);
-      };
+      reader.onload = (e) => setSelectedImage(e.target.result);
       reader.readAsDataURL(file);
     }
   };
 
-  const toggleMenu = () => {
-    setMenuVisible(!menuVisible);
-  };
+  const toggleMenu = () => setMenuVisible(!menuVisible);
 
   const openUrlModal = () => {
     setMenuVisible(false);
@@ -71,93 +64,118 @@ const Home = () => {
     setMenuVisible(false);
     try {
       const text = await navigator.clipboard.readText();
-      if (text && (text.startsWith('http://') || text.startsWith('https://'))) {
+      if (text.startsWith('http://') || text.startsWith('https://')) {
         setSelectedImage(text);
       } else {
         alert('Clipboard does not contain a valid image URL.');
       }
-    } catch (err) {
+    } catch {
       alert('Failed to read clipboard contents.');
     }
   };
 
+  const scrollToEditor = () => {
+    editorRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
-    <div className="home-container">
-      <div className="left-panel" style={{ position: 'relative' }}>
-        <button
-          type="button"
-          aria-label="Menu"
-          className="menukebab-button"
-          onClick={toggleMenu}
-        >
-          <CiMenuKebab />
-        </button>
-        {menuVisible && (
-          <div className="menukebab-menu">
-            <button className="menukebab-menu-item" onClick={openUrlModal}>
-              <FiLink className="menukebab-menu-icon" />
-              Load image from URL
-            </button>
-            <button className="menukebab-menu-item" onClick={handlePasteFromClipboard}>
-              <FiClipboard className="menukebab-menu-icon" />
-              Paste from clipboard
-            </button>
-          </div>
-        )}
+    <div className="home-wrapper">
+      {/* Landing Section */}
+      <div
+        className="landing-section"
+        style={{
+          backgroundImage: `url(${bgImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          padding: '150px 20px',
+          color: 'white',
+          textAlign: 'center',
+        }}
+      >
+        <div className="landing-card">
+  <h1 className="landing-title">Welcome to Pik-cha</h1>
+  <p className="landing-description">
+    Modern AI Powered Photo Editor for Quick and Professional Edits
+  </p>
+  <button className="edit-image-btn" onClick={scrollToEditor}>Edit Image</button>
+</div>
 
-        {urlModalVisible && (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              <h2>Load Image from URL</h2>
-              <input
-                type="text"
-                placeholder="Enter image URL"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                className="url-input"
-              />
-              <div className="modal-buttons">
-                <button onClick={handleLoadFromURL} className="modal-load-btn">Load</button>
-                <button onClick={closeUrlModal} className="modal-cancel-btn">Cancel</button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-          style={{ marginTop: '30px', cursor: 'pointer', width: '160px', height: '160px' }}
-          title="Drag and drop an image here"
-        >
-          {selectedImage ? (
-            <img src={selectedImage} alt="Selected" style={{ width: '100%', height: '100%', borderRadius: '10px', objectFit: 'cover' }} />
-          ) : (
-            <TbLibraryPhoto size={160} style={{ marginBottom: '10px' }} />
-          )}
-        </div>
-        <div className="image-placeholder">
-          <button className="open-image-btn" onClick={handleOpenImageClick}>+ Open image</button>
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            style={{ display: 'none' }}
-            onChange={handleFileChange}
-          />
-          <div className="create-buttons">
-            <button className="create-btn">Create new</button>
-            <button className="create-btn">Create collage</button>
-          </div>
-        </div>
       </div>
 
-      <div className="right-panel">
-        <h1 className="title">Modern AI Powered Photo Editor for Quick and Professional Edits</h1>
-        <p className="description">
-          Welcome to the free modern AI powered photo editor by Pik-cha. Start editing by
-          clicking on the open photo button, drag n' drop a file or paste from the clipboard (ctrl+v).
-        </p>
+      {/* Image Editor Section */}
+      <div className="home-container" ref={editorRef}>
+        <div className="editor-panel">
+          <div className="toolbar">
+            <button className="menukebab-button" onClick={toggleMenu} aria-label="Menu">
+              <CiMenuKebab />
+            </button>
+            {menuVisible && (
+              <div className="menukebab-menu">
+                <button className="menukebab-menu-item" onClick={openUrlModal}>
+                  <FiLink className="menukebab-menu-icon" />
+                  Load from URL
+                </button>
+                <button className="menukebab-menu-item" onClick={handlePasteFromClipboard}>
+                  <FiClipboard className="menukebab-menu-icon" />
+                  Paste from clipboard
+                </button>
+              </div>
+            )}
+          </div>
+
+          {urlModalVisible && (
+            <div className="modal-overlay">
+              <div className="modal-content">
+                <h2>Load Image from URL</h2>
+                <input
+                  type="text"
+                  placeholder="Enter image URL"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  className="url-input"
+                />
+                <div className="modal-buttons">
+                  <button onClick={handleLoadFromURL} className="modal-load-btn">Load</button>
+                  <button onClick={closeUrlModal} className="modal-cancel-btn">Cancel</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div
+            className="image-drop-zone"
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            title="Drag and drop an image here"
+          >
+            {selectedImage ? (
+              <img src={selectedImage} alt="Preview" className="preview-image" />
+            ) : (
+              <TbLibraryPhoto size={120} />
+            )}
+          </div>
+
+          <div className="action-buttons">
+            <button className="open-image-btn" onClick={handleOpenImageClick}>+ Open Image</button>
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              style={{ display: 'none' }}
+              onChange={handleFileChange}
+            />
+            <button className="create-btn">Create New</button>
+            <button className="create-btn">Create Collage</button>
+          </div>
+        </div>
+
+        <div className="info-panel">
+          <h1 className="title">AI Powered Photo Editor</h1>
+          <p className="description">
+            Start editing by uploading or dragging a photo. Use powerful AI tools for smart edits, filters, and more!
+          </p>
+        </div>
       </div>
     </div>
   );

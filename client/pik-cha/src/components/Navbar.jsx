@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { FaUser, FaCameraRetro } from 'react-icons/fa';
+import { LuMenu } from 'react-icons/lu'; // Import Dashboard icon
 import '../index.css';
 
 const Navbar = () => {
@@ -15,6 +16,11 @@ const Navbar = () => {
   const handleLoginSignupClick = (e) => {
     e.preventDefault();
     navigate('/loginsignup');
+  };
+
+  const handleDashboardClick = (e) => {
+    e.preventDefault();
+    navigate('/dashboard');
   };
 
   return (
@@ -40,6 +46,14 @@ const Navbar = () => {
         >
           <FaUser style={{ marginRight: '5px' }} />
           Login/Signup
+        </button>
+        <button
+          type="button"
+          className={`navbar-button icon-only ${location.pathname === '/dashboard' ? 'active' : ''}`}
+          onClick={handleDashboardClick}
+          title="Dashboard"
+        >
+          <LuMenu style={{ fontSize: '1.2rem' }} />
         </button>
       </div>
     </nav>

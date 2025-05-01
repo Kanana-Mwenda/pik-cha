@@ -1,0 +1,429 @@
+/* *{
+    margin:0;
+    padding:0;
+    box-sizing: border-box;
+  }
+  body{
+    font-family: 'Poppins', sans-serif;
+    background-color: black;
+  }
+  
+  .navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height:90px;
+    padding: 1rem 2rem;
+    background-color: #212121;
+    color: #fff;
+  }
+  
+  .navbar-logo-link {
+    color: #fdfcfd;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 1.5rem;
+    letter-spacing: 1px;
+    font-family: 'Poppins', sans-serif;
+    transition: color 0.3s ease;
+    text-transform: none;
+    border-bottom: 2px solid transparent;
+  }
+  
+  .navbar-links {
+    display: flex;
+    gap: 1.5rem;
+  }
+  
+  .navbar-link {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  .navbar-link:hover {
+    text-decoration: underline;
+  }
+  
+  .navbar-button {
+    background-color: transparent;
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+  }
+  
+  .navbar-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    text-decoration: none;
+  }
+  
+  .navbar-button.active {
+    text-decoration: underline;
+  }
+  .wrapper{
+    position: relative;
+    width: 1000px;
+    height: 600px;
+    background: #fff;
+    border-radius: 10px;
+    color:black;
+    display:flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: height .2s ease;
+    overflow: hidden;
+    margin: 0 auto;
+  }
+  .wrapper.active{
+    height:600px;
+  }
+  .wrapper .image-container {
+    width: 50%;
+    height: 100%;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    min-width: 500px;
+    max-width: 500px;
+  }
+  .wrapper .image-container img {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    object-fit: cover;
+  }
+  .wrapper .form-box{
+    width: 55%;
+    padding:40px;
+  }
+  .wrapper .form-box.login{
+    transition: transform .18s ease;
+    transform: translateX(0);
+    z-index: 1;
+    width: 55%;
+  }
+  .wrapper.active .form-box.login{
+    transition:none;
+    transform: translateX(300px);
+    z-index: 0;
+  }
+  .wrapper .form-box.signup{
+    position:absolute;
+    width: 45%;
+    right: 0;
+    transform: translateX(0);
+    transition:none;
+    z-index: 0;
+  }
+  .wrapper.active .form-box.signup{
+    transition: transform .18s ease;
+    transform: translateX(0);
+    z-index: 1;
+  }
+  form h1{
+    font-size: 40px;
+    text-align: center;
+  }
+  form .input-box{
+    position:relative;
+    width:100%;
+    height:50px;
+    margin: 30px 0;
+  }
+  .input-box input{
+    width:100%;
+    height:100%;
+    background: transparent;
+    border:2px solid black;
+    border-radius:40px;
+    font-size: 16px;
+    color: black;
+    padding:20px 45px 20px 20px;
+  }
+  .input-box input::placeholder{
+    color:rgb(126, 123, 123);
+  }
+  .input-box .icon{
+    position:absolute;
+    right:20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+  }
+  form .remember-forgot{
+    display:flex;
+    justify-content: space-between;
+    font-size:14.5px;
+    margin: -15px 0 15px;
+  }
+  .remember-forgot label input{
+    accent-color: #fff;
+    margin-right: 4px;
+  }
+  .remember-forgot a {
+    color:navy;
+    text-decoration: none;
+  }
+  .remember-forgot a:hover{
+    text-decoration: underline;
+  }
+  form button{
+    width: 100%;
+    height: 45px;
+    background:black;
+    border:none;
+    border-radius:40px;
+    cursor:pointer;
+    font-size:16px;
+    color:#fff;
+    font-weight: 700;
+  
+  }
+  form .signup-link{
+    font-size: 14.5px;
+    text-align:center;
+    margin:20px 0 15px;
+  }
+  .signup-link p a {
+    color:navy;
+    text-decoration:none;
+    font-weight:600;
+  
+  }
+  .signup-link p a:hover{
+    text-decoration: underline;
+  }
+  
+  .home-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px;
+    gap: 40px;
+    min-height: 100vh;
+    background-color: #333;
+    color: white;
+  }
+  
+  .editor-panel {
+    width: 500px;
+    background-color: #4f4c4c;
+    border-radius: 10px;
+    padding: 20px;
+    position: relative;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  }
+  
+  .toolbar {
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  .image-drop-zone {
+    margin: 30px auto;
+    width: 100%;
+    height: 280px;
+    border: 2px dashed #aaa;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #3e3e3e;
+    cursor: pointer;
+    overflow: hidden;
+  }
+  
+  .preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  
+  .action-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .open-image-btn, .create-btn {
+    background-color: #007bff;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-size: 16px;
+    color: white;
+    cursor: pointer;
+    width: 100%;
+  }
+  
+  .create-btn {
+    background-color: #5c5c5c;
+  }
+  
+  .create-btn:hover {
+    background-color: #777;
+  }
+  
+  .open-image-btn:hover {
+    background-color: #008fcc;
+  }
+  
+  .info-panel {
+    max-width: 500px;
+  }
+  
+  .title {
+    font-size: 2rem;
+    margin-bottom: 20px;
+  }
+  
+  .description {
+    color: #cfcfcf;
+    font-size: 1.1rem;
+  }
+  
+  .menukebab-button {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.8rem;
+    cursor: pointer;
+  }
+  
+  .menukebab-menu {
+    position: absolute;
+    top: 50px;
+    right: 20px;
+    background-color: #4f4c4c;
+    border-radius: 6px;
+    padding: 10px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+  }
+  
+  .menukebab-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+  }
+  
+  .menukebab-menu-item:hover {
+    background-color: #007bff;
+  }
+  
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+  }
+  
+  .modal-content {
+    background-color: #fff;
+    padding: 20px 30px;
+    border-radius: 10px;
+    color: #333;
+    width: 320px;
+  }
+  
+  .url-input {
+    width: 100%;
+    padding: 8px;
+    margin: 10px 0 20px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+  }
+  
+  .modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  
+  .modal-load-btn, .modal-cancel-btn {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  
+  .modal-load-btn {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .modal-load-btn:hover {
+    background-color: #0056b3;
+  }
+  
+  .modal-cancel-btn {
+    background-color: #ddd;
+  }
+  
+  .modal-cancel-btn:hover {
+    background-color: #bbb;
+  }
+  /* Home wrapper for layout stacking */
+  /* .home-wrapper {
+    display: flex;
+    flex-direction: column;
+  } */
+  
+  /* Landing section styles */
+  /* .landing-card {
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 40px 30px;
+    max-width: 600px;
+    margin: 0 auto;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  }
+  
+  .landing-title {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    color: white;
+  }
+  
+  .landing-description {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    color: #ddd;
+  }
+  
+  .edit-image-btn {
+    padding: 12px 25px;
+    font-size: 1rem;
+    background-color: #007bff;
+    border: none;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .edit-image-btn:hover {
+    background-color: #0056b3;
+  } */
+
+  

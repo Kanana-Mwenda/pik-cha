@@ -4,8 +4,6 @@ import { CiMenuKebab } from "react-icons/ci";
 import { FiLink, FiClipboard } from "react-icons/fi";
 import bgImage from '../assets/bglanding.png';
 
-import '../index.css';
-
 const Home = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [menuVisible, setMenuVisible] = useState(false);
@@ -79,85 +77,105 @@ const Home = () => {
   };
 
   return (
-    <div className="home-wrapper">
+    <div className="flex flex-col">
       {/* Landing Section */}
       <div
-        className="landing-section"
-        style={{
-          backgroundImage: `url(${bgImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          padding: '150px 20px',
-          color: 'white',
-          textAlign: 'center',
-        }}
+        className="relative w-full h-[600px] bg-cover bg-center bg-no-repeat text-white flex items-center justify-center"
+        style={{ backgroundImage: `url(${bgImage})` }}
       >
-        <div className="landing-card">
-  <h1 className="landing-title">Welcome to Pik-cha</h1>
-  <p className="landing-description">
-    Modern AI Powered Photo Editor for Quick and Professional Edits
-  </p>
-  <button className="edit-image-btn" onClick={scrollToEditor}>Edit Image</button>
-</div>
-
+        <div className="bg-black bg-opacity-60 p-10 rounded-lg shadow-lg max-w-lg text-center">
+          <h1 className="text-4xl mb-5">Welcome to Pik-cha</h1>
+          <p className="text-xl mb-6">Modern AI Powered Photo Editor for Quick and Professional Edits</p>
+          <button
+            className="px-6 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-500 transition"
+            onClick={scrollToEditor}
+          >
+            Edit Image
+          </button>
+        </div>
       </div>
 
       {/* Image Editor Section */}
-      <div className="home-container" ref={editorRef}>
-        <div className="editor-panel">
-          <div className="toolbar">
-            <button className="menukebab-button" onClick={toggleMenu} aria-label="Menu">
+      <div className="flex justify-center items-center py-10 px-4 bg-gray-800 min-h-screen" ref={editorRef}>
+        <div className="bg-gray-600 w-full md:w-[500px] p-6 rounded-lg shadow-xl relative">
+          <div className="flex justify-end">
+            <button
+              className="text-white text-2xl"
+              onClick={toggleMenu}
+              aria-label="Menu"
+            >
               <CiMenuKebab />
             </button>
-            {menuVisible && (
-              <div className="menukebab-menu">
-                <button className="menukebab-menu-item" onClick={openUrlModal}>
-                  <FiLink className="menukebab-menu-icon" />
-                  Load from URL
-                </button>
-                <button className="menukebab-menu-item" onClick={handlePasteFromClipboard}>
-                  <FiClipboard className="menukebab-menu-icon" />
-                  Paste from clipboard
-                </button>
-              </div>
-            )}
           </div>
 
+          {menuVisible && (
+            <div className="absolute top-16 right-6 bg-gray-600 rounded-md shadow-md z-10">
+              <button
+                className="flex items-center p-3 text-white hover:bg-blue-600"
+                onClick={openUrlModal}
+              >
+                <FiLink className="mr-2" />
+                Load from URL
+              </button>
+              <button
+                className="flex items-center p-3 text-white hover:bg-blue-600"
+                onClick={handlePasteFromClipboard}
+              >
+                <FiClipboard className="mr-2" />
+                Paste from clipboard
+              </button>
+            </div>
+          )}
+
           {urlModalVisible && (
-            <div className="modal-overlay">
-              <div className="modal-content">
-                <h2>Load Image from URL</h2>
+            <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
+              <div className="bg-white p-6 rounded-lg text-gray-800 w-[320px]">
+                <h2 className="text-xl mb-4">Load Image from URL</h2>
                 <input
                   type="text"
                   placeholder="Enter image URL"
                   value={imageUrl}
                   onChange={(e) => setImageUrl(e.target.value)}
-                  className="url-input"
+                  className="w-full p-3 border rounded-lg mb-4"
                 />
-                <div className="modal-buttons">
-                  <button onClick={handleLoadFromURL} className="modal-load-btn">Load</button>
-                  <button onClick={closeUrlModal} className="modal-cancel-btn">Cancel</button>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={handleLoadFromURL}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500"
+                  >
+                    Load
+                  </button>
+                  <button
+                    onClick={closeUrlModal}
+                    className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
             </div>
           )}
 
           <div
-            className="image-drop-zone"
+            className="w-full h-[280px] border-2 border-dashed border-gray-400 rounded-lg bg-gray-700 flex items-center justify-center cursor-pointer"
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             title="Drag and drop an image here"
           >
             {selectedImage ? (
-              <img src={selectedImage} alt="Preview" className="preview-image" />
+              <img src={selectedImage} alt="Preview" className="w-full h-full object-contain" />
             ) : (
-              <TbLibraryPhoto size={120} />
+              <TbLibraryPhoto size={120} className="text-gray-500" />
             )}
           </div>
 
-          <div className="action-buttons">
-            <button className="open-image-btn" onClick={handleOpenImageClick}>+ Open Image</button>
+          <div className="flex flex-col items-center gap-3 mt-6">
+            <button
+              className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition"
+              onClick={handleOpenImageClick}
+            >
+              + Open Image
+            </button>
             <input
               type="file"
               accept="image/*"
@@ -165,14 +183,18 @@ const Home = () => {
               style={{ display: 'none' }}
               onChange={handleFileChange}
             />
-            <button className="create-btn">Create New</button>
-            <button className="create-btn">Create Collage</button>
+            <button className="w-full py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition">
+              Create New
+            </button>
+            <button className="w-full py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition">
+              Create Collage
+            </button>
           </div>
         </div>
 
-        <div className="info-panel">
-          <h1 className="title">AI Powered Photo Editor</h1>
-          <p className="description">
+        <div className="max-w-[500px] ml-10 text-white">
+          <h1 className="text-4xl mb-6">AI Powered Photo Editor</h1>
+          <p className="text-lg text-gray-300">
             Start editing by uploading or dragging a photo. Use powerful AI tools for smart edits, filters, and more!
           </p>
         </div>

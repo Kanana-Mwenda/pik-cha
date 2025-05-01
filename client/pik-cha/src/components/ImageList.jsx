@@ -2,37 +2,24 @@
 
 import React from 'react';
 
-const ImageList = ({ images, onImageClick, onImageDelete }) => {
-  if (images.length === 0) return <p>No images uploaded.</p>;
+const ImageList = ({ images, onImageClick }) => {
+  if (!images.length) return <p>No images uploaded yet.</p>;
 
   return (
-    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '1rem' }}>
       {images.map((img) => (
-        <div key={img.id} style={{ position: 'relative' }}>
-          <img
-            src={img.url}
-            alt={img.name || 'Uploaded'}
-            style={{ width: 150, height: 150, objectFit: 'cover', cursor: 'pointer' }}
-            onClick={() => onImageClick(img)}
-          />
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onImageDelete(img.id);
-            }}
-            style={{
-              position: 'absolute',
-              top: 5,
-              right: 5,
-              background: 'white',
-              border: '1px solid gray',
-              cursor: 'pointer',
-              padding: '5px',
-            }}
-            title="Delete Image"
-          >
-            ❌
-          </button>
+        <div
+          key={img.id}
+          style={{
+            position: 'relative',
+            cursor: 'pointer',
+            border: '1px solid #ccc',
+            borderRadius: '8px',
+            overflow: 'hidden',
+          }}
+          onClick={() => onImageClick(img)}
+        >
+          <img src={img.url} alt={img.name || 'Uploaded'} style={{ width: '100%', height: '150px', objectFit: 'cover' }} />
         </div>
       ))}
     </div>

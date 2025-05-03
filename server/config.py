@@ -34,7 +34,7 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "supersecretkey")
 app.config["SESSION_TYPE"] = "filesystem"
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=7)
 
-# Database configuration from .env
+# Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
     "DATABASE_URL", "postgresql://pikcha_user:alenga123@localhost:5432/pikcha_db"
 )
@@ -52,3 +52,11 @@ db = SQLAlchemy(app, model_class=Base)
 
 # Migrations
 migrate = Migrate(app, db)
+
+# Upload folder for images
+UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Optional: set max upload size (e.g. 16MB)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB

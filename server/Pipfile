@@ -18,6 +18,9 @@ pyjwt = "*"
 marshmallow-sqlalchemy = "*"
 rembg = "*"
 uuid = "*"
+pytest = "*"
+pytest-flask = "*"
+onnxruntime = "*"
 
 [dev-packages]
 

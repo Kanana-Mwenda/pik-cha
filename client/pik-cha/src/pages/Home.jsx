@@ -1,14 +1,21 @@
 import React, { useState, useRef } from 'react';
+import { useDispatch } from 'react-redux';
 import { TbLibraryPhoto } from "react-icons/tb";
 import { CiMenuKebab } from "react-icons/ci";
 import { FiLink, FiClipboard } from "react-icons/fi";
+import { uploadImageAsync, transformImageAsync } from '../features/images/imageSlice';
+import TransformModal from '../components/TransformModal';
 import '../index.css';
 
 const Home = () => {
+  const dispatch = useDispatch();
   const [selectedImage, setSelectedImage] = useState(null);
+  const [uploadedImage, setUploadedImage] = useState(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const [urlModalVisible, setUrlModalVisible] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
+  const [error, setError] = useState('');
+  const [showTransformModal, setShowTransformModal] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleOpenImageClick = () => {
@@ -17,14 +24,32 @@ const Home = () => {
     }
   };
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (file && file.type.startsWith('image/')) {
+      setError('');
       const reader = new FileReader();
       reader.onload = (e) => {
         setSelectedImage(e.target.result);
       };
       reader.readAsDataURL(file);
+
+      // Upload image to backend
+      const formData = new FormData();
+      formData.append('image', file);
+      try {
+        const resultAction = await dispatch(uploadImageAsync(formData));
+        if (uploadImageAsync.fulfilled.match(resultAction)) {
+          setUploadedImage(resultAction.payload);
+          setSelectedImage(resultAction.payload.url);
+        } else {
+          setError(resultAction.payload || 'Upload failed');
+        }
+      } catch (err) {
+        setError('Upload failed');
+      }
+    } else {
+      setError('Please select a valid image file.');
     }
   };
 
@@ -33,16 +58,34 @@ const Home = () => {
     event.stopPropagation();
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = async (event) => {
     event.preventDefault();
     event.stopPropagation();
     const file = event.dataTransfer.files[0];
     if (file && file.type.startsWith('image/')) {
+      setError('');
       const reader = new FileReader();
       reader.onload = (e) => {
         setSelectedImage(e.target.result);
       };
       reader.readAsDataURL(file);
+
+      // Upload image to backend
+      const formData = new FormData();
+      formData.append('image', file);
+      try {
+        const resultAction = await dispatch(uploadImageAsync(formData));
+        if (uploadImageAsync.fulfilled.match(resultAction)) {
+          setUploadedImage(resultAction.payload);
+          setSelectedImage(resultAction.payload.url);
+        } else {
+          setError(resultAction.payload || 'Upload failed');
+        }
+      } catch (err) {
+        setError('Upload failed');
+      }
+    } else {
+      setError('Please drop a valid image file.');
     }
   };
 
@@ -78,6 +121,25 @@ const Home = () => {
       }
     } catch (err) {
       alert('Failed to read clipboard contents.');
+    }
+  };
+
+  const handleTransform = async (transformations) => {
+    if (!uploadedImage) {
+      setError('Please upload an image first.');
+      return;
+    }
+    setError('');
+    try {
+      const resultAction = await dispatch(transformImageAsync({ imageId: uploadedImage.id, transformations }));
+      if (transformImageAsync.fulfilled.match(resultAction)) {
+        setUploadedImage(resultAction.payload);
+        setSelectedImage(resultAction.payload.url);
+      } else {
+        setError(resultAction.payload || 'Transformation failed');
+      }
+    } catch (err) {
+      setError('Transformation failed');
     }
   };
 
@@ -136,6 +198,7 @@ const Home = () => {
             <TbLibraryPhoto size={160} style={{ marginBottom: '10px' }} />
           )}
         </div>
+        {error && <p className="text-red-500 mt-2">{error}</p>}
         <div className="image-placeholder">
           <button className="open-image-btn" onClick={handleOpenImageClick}>+ Open image</button>
           <input
@@ -158,6 +221,20 @@ const Home = () => {
           Welcome to the free modern AI powered photo editor by Pik-cha. Start editing by
           clicking on the open photo button, drag n' drop a file or paste from the clipboard (ctrl+v).
         </p>
+        {showTransformModal && (
+          <TransformModal
+            imageUrl={selectedImage}
+            onClose={() => setShowTransformModal(false)}
+            onTransform={handleTransform}
+          />
+        )}
+        <button
+          className="create-btn mt-4"
+          onClick={() => setShowTransformModal(true)}
+          disabled={!uploadedImage}
+        >
+          Edit Image
+        </button>
       </div>
     </div>
   );

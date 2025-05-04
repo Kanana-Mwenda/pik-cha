@@ -1,13 +1,12 @@
-// src/components/TransformModal.jsx
 import { useState } from 'react';
 
-function TransformModal({ imageUrl, onClose }) {
+function TransformModal({ imageUrl, onClose, onTransform }) {
   const [rotation, setRotation] = useState(0);
   const [grayscale, setGrayscale] = useState(false);
   const [flipped, setFlipped] = useState(false);
 
   const handleRotate = () => {
-    setRotation((prev) => prev + 90);
+    setRotation((prev) => (prev + 90) % 360);
   };
 
   const handleGrayscale = () => {
@@ -19,7 +18,12 @@ function TransformModal({ imageUrl, onClose }) {
   };
 
   const handleSave = () => {
-    alert("Changes saved (fake for now)!");
+    const transformations = {
+      rotate: rotation,
+      grayscale,
+      flip: flipped,
+    };
+    onTransform(transformations);
     onClose();
   };
 

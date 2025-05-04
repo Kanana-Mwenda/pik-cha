@@ -1,25 +1,47 @@
 import React, { useState, useRef } from 'react';
+import { useDispatch } from 'react-redux';
 import { TbLibraryPhoto } from "react-icons/tb";
 import { CiMenuKebab } from "react-icons/ci";
 import { FiLink, FiClipboard } from "react-icons/fi";
 import bgImage from '../assets/bglanding.png';
 
 const Home = () => {
+  const dispatch = useDispatch();
   const [selectedImage, setSelectedImage] = useState(null);
+  const [uploadedImage, setUploadedImage] = useState(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const [urlModalVisible, setUrlModalVisible] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
+  const [error, setError] = useState('');
+  const [showTransformModal, setShowTransformModal] = useState(false);
   const fileInputRef = useRef(null);
   const editorRef = useRef(null);
 
   const handleOpenImageClick = () => fileInputRef.current?.click();
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (file?.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = (e) => setSelectedImage(e.target.result);
       reader.readAsDataURL(file);
+
+      // Upload image to backend
+      const formData = new FormData();
+      formData.append('image', file);
+      try {
+        const resultAction = await dispatch(uploadImageAsync(formData));
+        if (uploadImageAsync.fulfilled.match(resultAction)) {
+          setUploadedImage(resultAction.payload);
+          setSelectedImage(resultAction.payload.url);
+        } else {
+          setError(resultAction.payload || 'Upload failed');
+        }
+      } catch (err) {
+        setError('Upload failed');
+      }
+    } else {
+      setError('Please select a valid image file.');
     }
   };
 
@@ -28,7 +50,7 @@ const Home = () => {
     event.stopPropagation();
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = async (event) => {
     event.preventDefault();
     event.stopPropagation();
     const file = event.dataTransfer.files[0];

@@ -361,7 +361,7 @@ function TransformModal({ imageUrl, onClose, onTransform, onSave }) {
         {/* Main content */}
         <div className="flex flex-1 overflow-hidden">
           {/* Left sidebar - Tools */}
-          <div className="bg-gray-200 w-14 flex flex-col items-center border-r border-gray-300">
+          <div className="bg-gray-200 w-18 flex flex-col items-center border-r border-gray-300">
             {toolButton('Home', <IconHome />, 'home')}
             {toolButton('Move', <IconMove />, 'move')}
             {toolButton('Rotate', <IconRotate />, 'rotate')}

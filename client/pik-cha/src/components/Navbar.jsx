@@ -16,10 +16,6 @@ const Navbar = () => {
     navigate('/loginsignup');
   };
 
-  const handleDashboardClick = (e) => {
-    e.preventDefault();
-    navigate('/dashboard');
-  };
 
   return (
     <nav className="flex items-center justify-between h-[90px] px-8 bg-[#212121] text-white">

@@ -1,24 +1,48 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { TbLibraryPhoto } from "react-icons/tb";
 import { CiMenuKebab } from "react-icons/ci";
 import { FiLink, FiClipboard } from "react-icons/fi";
 import bgImage from '../assets/bglanding.png';
+import TransformModal from '../components/TransformModal.jsx';
+import SaveFormatModal from '../components/SaveFormatModal.jsx';
 
 const Home = () => {
   const [selectedImage, setSelectedImage] = useState(null);
+  const [editedImages, setEditedImages] = useState([]);
   const [menuVisible, setMenuVisible] = useState(false);
   const [urlModalVisible, setUrlModalVisible] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const fileInputRef = useRef(null);
   const editorRef = useRef(null);
+  const [showTransformModal, setShowTransformModal] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [transformedImage, setTransformedImage] = useState(null);
+
+
+  // Load edited images from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('editedImages');
+    if (saved) setEditedImages(JSON.parse(saved));
+  }, []);
+
+  // Save edited images to localStorage on change
+  useEffect(() => {
+    localStorage.setItem('editedImages', JSON.stringify(editedImages));
+  }, [editedImages]);
 
   const handleOpenImageClick = () => fileInputRef.current?.click();
+
+  const handleImageSelect = (imageDataUrl) => {
+    setSelectedImage(imageDataUrl);
+    setEditedImages(prev => [imageDataUrl, ...prev]); // prepend
+    setShowTransformModal(true);
+  };
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file?.type.startsWith('image/')) {
       const reader = new FileReader();
-      reader.onload = (e) => setSelectedImage(e.target.result);
+      reader.onload = (e) => handleImageSelect(e.target.result);
       reader.readAsDataURL(file);
     }
   };
@@ -34,7 +58,7 @@ const Home = () => {
     const file = event.dataTransfer.files[0];
     if (file?.type.startsWith('image/')) {
       const reader = new FileReader();
-      reader.onload = (e) => setSelectedImage(e.target.result);
+      reader.onload = (e) => handleImageSelect(e.target.result);
       reader.readAsDataURL(file);
     }
   };
@@ -53,7 +77,7 @@ const Home = () => {
 
   const handleLoadFromURL = () => {
     if (imageUrl.trim()) {
-      setSelectedImage(imageUrl.trim());
+      handleImageSelect(imageUrl.trim());
       closeUrlModal();
     }
   };
@@ -63,7 +87,7 @@ const Home = () => {
     try {
       const text = await navigator.clipboard.readText();
       if (text.startsWith('http://') || text.startsWith('https://')) {
-        setSelectedImage(text);
+        handleImageSelect(text);
       } else {
         alert('Clipboard does not contain a valid image URL.');
       }
@@ -184,9 +208,6 @@ const Home = () => {
               onChange={handleFileChange}
             />
             <button className="w-full py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition">
-              Create New
-            </button>
-            <button className="w-full py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition">
               Create Collage
             </button>
           </div>
@@ -199,6 +220,53 @@ const Home = () => {
           </p>
         </div>
       </div>
+
+      {/* Edited Images Section */}
+      <div className="w-full px-6 py-10 bg-gray-900">
+        <h2 className="text-white text-2xl mb-4">Edited Images</h2>
+        {editedImages.length === 0 ? (
+          <p className="text-gray-400">No edited images yet.</p>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {editedImages.map((img, index) => (
+              <img
+                key={index}
+                src={img}
+                alt={`Edited ${index}`}
+                className="w-full h-40 object-cover rounded-lg border border-gray-600"
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Transform Modal */}
+      {showTransformModal && (
+        <TransformModal
+          imageUrl={selectedImage}
+          onClose={() => setShowTransformModal(false)}
+          onTransform={(transformations) => {
+            // Store transformations or transformed image here
+            setTransformedImage(selectedImage); // Assuming transformed image is selectedImage for now
+            setShowSaveModal(true);
+          }}
+          onSave={() => {
+            setShowTransformModal(false);
+          }}
+        />
+      )}
+
+        {showSaveModal && transformedImage && (
+          <SaveFormatModal
+            imageUrl={transformedImage}
+            onClose={() => setShowSaveModal(false)}
+            onDownload={({ format, quality }) => {
+              // Handle download logic here
+              console.log('Download as:', format, 'Quality:', quality);
+            }}
+          />
+        )}
+
     </div>
   );
 };

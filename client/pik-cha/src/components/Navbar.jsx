@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { FaUser, FaCameraRetro } from 'react-icons/fa';
-import { LuMenu } from 'react-icons/lu';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -17,10 +16,6 @@ const Navbar = () => {
     navigate('/loginsignup');
   };
 
-  const handleDashboardClick = (e) => {
-    e.preventDefault();
-    navigate('/dashboard');
-  };
 
   return (
     <nav className="flex items-center justify-between h-[90px] px-8 bg-[#212121] text-white">
@@ -56,16 +51,7 @@ const Navbar = () => {
           Login/Signup
         </button>
 
-        <button
-          type="button"
-          title="Dashboard"
-          className={`flex items-center justify-center px-3 py-1.5 rounded-xl transition hover:bg-white/10 hover:rounded-md ${
-            location.pathname === '/dashboard' ? 'underline' : ''
-          }`}
-          onClick={handleDashboardClick}
-        >
-          <LuMenu className="text-[1.2rem]" />
-        </button>
+        
       </div>
     </nav>
   );

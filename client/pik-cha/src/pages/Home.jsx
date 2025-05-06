@@ -185,6 +185,7 @@ const Home = () => {
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             title="Drag and drop an image here"
+            
           >
             {selectedImage ? (
               <img src={selectedImage} alt="Preview" className="w-full h-full object-contain" />
@@ -216,7 +217,7 @@ const Home = () => {
         <div className="max-w-[500px] ml-10 text-white">
           <h1 className="text-4xl mb-6">AI Powered Photo Editor</h1>
           <p className="text-lg text-gray-300">
-            Start editing by uploading or dragging a photo. Use powerful AI tools for smart edits, filters, and more!
+            Start editing by clicking on the open image button or drag n'drop a file or paste from the clipboard(ctrl+v)
           </p>
         </div>
       </div>

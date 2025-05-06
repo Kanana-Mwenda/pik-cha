@@ -1,24 +1,24 @@
 import { useState } from 'react';
 
 function SaveFormatModal({ imageUrl, onClose, onDownload }) {
-  const [format, setFormat] = useState('jpg');
+  const [format, setFormat] = useState('jpeg');
   const [quality, setQuality] = useState(90);
   const [width, setWidth] = useState(1024);
   const [height, setHeight] = useState(790);
   const [qualityOption, setQualityOption] = useState('HIGH');
   
   const fileSize = '71.8kb'; // This would typically be calculated dynamically
-  
+
   const handleDownload = () => {
     onDownload({ format: format.toLowerCase(), quality, width, height });
     onClose();
   };
-  
+
   const formatOptions = [
     {
-      id: 'jpg',
-      name: 'JPG',
-      description: 'Small files perfect for photos and sharing',
+      id: 'jpeg',
+      name: 'JPEG',
+      description: 'Similar to JPG, used widely for photos',
       recommended: true
     },
     {
@@ -27,20 +27,20 @@ function SaveFormatModal({ imageUrl, onClose, onDownload }) {
       description: 'Large and lossless, ideal for icons and graphics'
     },
     {
-      id: 'webp',
-      name: 'WebP',
-      description: 'Modern format suitable for all types of images'
+      id: 'jpg',
+      name: 'JPG',
+      description: 'Small files perfect for photos and sharing'
     },
     {
-      id: 'pdf',
-      name: 'PDF',
-      description: 'Best for flyers and marketing material'
+      id: 'gif',
+      name: 'GIF',
+      description: 'Best for animations or simple graphics'
     }
   ];
 
   const handleQualityPresetClick = (preset) => {
     setQualityOption(preset);
-    switch(preset) {
+    switch (preset) {
       case 'LOW':
         setQuality(30);
         break;
@@ -94,10 +94,10 @@ function SaveFormatModal({ imageUrl, onClose, onDownload }) {
                     : 'bg-gray-800 hover:bg-gray-700'}`}
               >
                 <div className="flex items-center justify-center w-8 h-8 mr-3">
-                  {option.id === 'jpg' && <div className="text-blue-400">📷</div>}
+                  {option.id === 'jpeg' && <div className="text-blue-400">📸</div>}
                   {option.id === 'png' && <div className="text-blue-400">🖼️</div>}
-                  {option.id === 'webp' && <div className="text-blue-400">🌐</div>}
-                  {option.id === 'pdf' && <div className="text-blue-400">📄</div>}
+                  {option.id === 'jpg' && <div className="text-blue-400">📷</div>}
+                  {option.id === 'gif' && <div className="text-blue-400">🎞️</div>}
                 </div>
                 <div className="flex-1">
                   <div className="flex justify-between">
@@ -113,8 +113,8 @@ function SaveFormatModal({ imageUrl, onClose, onDownload }) {
               </div>
             ))}
             
-            {/* Quality settings - Only show for JPG */}
-            {format === 'jpg' && (
+            {/* Quality settings - Show for JPG and JPEG */}
+            {(format === 'jpg' || format === 'jpeg') && (
               <div className="mt-4 bg-blue-900 p-4 rounded-md border border-blue-700">
                 <div className="flex justify-between mb-2">
                   <span className="font-medium">Quality</span>
@@ -191,7 +191,7 @@ function SaveFormatModal({ imageUrl, onClose, onDownload }) {
             onClick={handleDownload}
             className="px-5 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
-            Save as
+            Download
           </button>
         </div>
         

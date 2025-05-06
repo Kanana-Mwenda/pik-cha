@@ -3,8 +3,10 @@ import { useState } from 'react';
 function TransformModal({ imageUrl, onClose, onTransform, onSave }) {
   const [rotation, setRotation] = useState(0);
   const [grayscale, setGrayscale] = useState(false);
-  const [flipped, setFlipped] = useState(false);
-  const [mirror, setMirror] = useState(false);
+  const [flipVertical, setFlipVertical] = useState(false);
+  const [flipHorizontal, setFlipHorizontal] = useState(false);
+  const [mirrorVertical, setMirrorVertical] = useState(false);
+  const [mirrorHorizontal, setMirrorHorizontal] = useState(false);
   const [resize, setResize] = useState({ width: 300, height: 300 });
   const [watermark, setWatermark] = useState('');
   const [filter, setFilter] = useState('none');
@@ -15,7 +17,8 @@ function TransformModal({ imageUrl, onClose, onTransform, onSave }) {
 
   const pushToHistory = () => {
     setHistory(prev => [...prev, {
-      rotation, grayscale, flipped, mirror, resize, watermark, filter
+      rotation, grayscale, flipVertical, flipHorizontal, 
+      mirrorVertical, mirrorHorizontal, resize, watermark, filter
     }]);
     setFuture([]);
   };
@@ -24,13 +27,16 @@ function TransformModal({ imageUrl, onClose, onTransform, onSave }) {
     if (history.length === 0) return;
     const last = history[history.length - 1];
     setFuture(prev => [{
-      rotation, grayscale, flipped, mirror, resize, watermark, filter
+      rotation, grayscale, flipVertical, flipHorizontal, 
+      mirrorVertical, mirrorHorizontal, resize, watermark, filter
     }, ...prev]);
     setHistory(prev => prev.slice(0, -1));
     setRotation(last.rotation);
     setGrayscale(last.grayscale);
-    setFlipped(last.flipped);
-    setMirror(last.mirror);
+    setFlipVertical(last.flipVertical);
+    setFlipHorizontal(last.flipHorizontal);
+    setMirrorVertical(last.mirrorVertical);
+    setMirrorHorizontal(last.mirrorHorizontal);
     setResize(last.resize);
     setWatermark(last.watermark);
     setFilter(last.filter);
@@ -41,13 +47,16 @@ function TransformModal({ imageUrl, onClose, onTransform, onSave }) {
     if (future.length === 0) return;
     const next = future[0];
     setHistory(prev => [...prev, {
-      rotation, grayscale, flipped, mirror, resize, watermark, filter
+      rotation, grayscale, flipVertical, flipHorizontal, 
+      mirrorVertical, mirrorHorizontal, resize, watermark, filter
     }]);
     setFuture(prev => prev.slice(1));
     setRotation(next.rotation);
     setGrayscale(next.grayscale);
-    setFlipped(next.flipped);
-    setMirror(next.mirror);
+    setFlipVertical(next.flipVertical);
+    setFlipHorizontal(next.flipHorizontal);
+    setMirrorVertical(next.mirrorVertical);
+    setMirrorHorizontal(next.mirrorHorizontal);
     setResize(next.resize);
     setWatermark(next.watermark);
     setFilter(next.filter);
@@ -57,8 +66,10 @@ function TransformModal({ imageUrl, onClose, onTransform, onSave }) {
     const transformations = {
       rotate: rotation,
       grayscale,
-      flip: flipped,
-      mirror,
+      flipVertical,
+      flipHorizontal,
+      mirrorVertical,
+      mirrorHorizontal,
       resize,
       watermark,
       filter,
@@ -68,7 +79,13 @@ function TransformModal({ imageUrl, onClose, onTransform, onSave }) {
   };
 
   const imgStyles = {
-    transform: `rotate(${rotation}deg) scaleX(${mirror ? -1 : 1}) scaleY(${flipped ? -1 : 1})`,
+    transform: `
+      rotate(${rotation}deg) 
+      scaleX(${flipHorizontal ? -1 : 1}) 
+      scaleY(${flipVertical ? -1 : 1}) 
+      ${mirrorHorizontal ? 'rotateY(180deg)' : ''} 
+      ${mirrorVertical ? 'rotateX(180deg)' : ''}
+    `,
     filter: `${grayscale ? 'grayscale(100%) ' : ''}${filter}`,
     width: `${resize.width}px`,
     height: `${resize.height}px`,
@@ -116,6 +133,14 @@ function TransformModal({ imageUrl, onClose, onTransform, onSave }) {
       <line x1="12" y1="3" x2="12" y2="21"></line>
       <polyline points="17 8 22 12 17 16"></polyline>
       <polyline points="7 8 2 12 7 16"></polyline>
+    </svg>
+  );
+
+  const IconMirror = () => (
+    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <polyline points="8 7 3 12 8 17"></polyline>
+      <polyline points="16 7 21 12 16 17"></polyline>
     </svg>
   );
 
@@ -191,18 +216,18 @@ function TransformModal({ imageUrl, onClose, onTransform, onSave }) {
         return (
           <div className="flex flex-col gap-4 w-full p-4">
             <h3 className="text-lg font-semibold">Rotate</h3>
-            <button 
-              onClick={() => { pushToHistory(); setRotation((r) => (r + 90) % 360); }} 
+            <button
+              onClick={() => { pushToHistory(); setRotation((r) => (r + 90) % 360); }}
               className="bg-blue-500 text-white py-2 px-4 rounded text-sm w-full"
             >
               Rotate 90°
             </button>
-            <input 
-              type="range" 
-              min="0" 
-              max="360" 
-              value={rotation} 
-              onChange={(e) => setRotation(parseInt(e.target.value))} 
+            <input
+              type="range"
+              min="0"
+              max="360"
+              value={rotation}
+              onChange={(e) => setRotation(parseInt(e.target.value))}
               className="w-full"
             />
             <div className="text-sm text-center">{rotation}°</div>
@@ -213,15 +238,14 @@ function TransformModal({ imageUrl, onClose, onTransform, onSave }) {
           <div className="flex flex-col gap-4 w-full p-4">
             <h3 className="text-lg font-semibold">Filters</h3>
             <div className="flex items-center gap-2">
-              <input 
-                type="checkbox" 
-                checked={grayscale} 
-                onChange={() => { pushToHistory(); setGrayscale(!grayscale); }} 
+              <input
+                type="checkbox"
+                checked={grayscale}
+                onChange={() => { pushToHistory(); setGrayscale(!grayscale); }}
                 id="grayscale"
               />
               <label htmlFor="grayscale">Grayscale</label>
             </div>
-            
             <select 
               value={filter} 
               onChange={(e) => { pushToHistory(); setFilter(e.target.value); }} 
@@ -240,16 +264,54 @@ function TransformModal({ imageUrl, onClose, onTransform, onSave }) {
           <div className="flex flex-col gap-4 w-full p-4">
             <h3 className="text-lg font-semibold">Flip</h3>
             <button 
-              onClick={() => { pushToHistory(); setFlipped(!flipped); }} 
+              onClick={() => { pushToHistory(); setFlipVertical(!flipVertical); }} 
               className="bg-green-500 text-white py-2 px-4 rounded text-sm w-full"
             >
               Flip Vertically
             </button>
             <button 
-              onClick={() => { pushToHistory(); setMirror(!mirror); }} 
+              onClick={() => { pushToHistory(); setFlipHorizontal(!flipHorizontal); }} 
+              className="bg-blue-500 text-white py-2 px-4 rounded text-sm w-full"
+            >
+              Flip Horizontally
+            </button>
+            <button 
+              onClick={() => { 
+                pushToHistory(); 
+                setFlipVertical(false);
+                setFlipHorizontal(false);
+              }} 
+              className="bg-gray-500 text-white py-2 px-4 rounded text-sm w-full mt-2"
+            >
+              Reset Flip
+            </button>
+          </div>
+        );
+      case 'mirror':
+        return (
+          <div className="flex flex-col gap-4 w-full p-4">
+            <h3 className="text-lg font-semibold">Mirror</h3>
+            <button 
+              onClick={() => { pushToHistory(); setMirrorVertical(!mirrorVertical); }} 
+              className="bg-purple-500 text-white py-2 px-4 rounded text-sm w-full"
+            >
+              Mirror Vertically
+            </button>
+            <button 
+              onClick={() => { pushToHistory(); setMirrorHorizontal(!mirrorHorizontal); }} 
               className="bg-yellow-500 text-white py-2 px-4 rounded text-sm w-full"
             >
               Mirror Horizontally
+            </button>
+            <button 
+              onClick={() => { 
+                pushToHistory(); 
+                setMirrorVertical(false);
+                setMirrorHorizontal(false);
+              }} 
+              className="bg-gray-500 text-white py-2 px-4 rounded text-sm w-full mt-2"
+            >
+              Reset Mirror
             </button>
           </div>
         );
@@ -336,7 +398,7 @@ function TransformModal({ imageUrl, onClose, onTransform, onSave }) {
   };
 
   const toolButton = (name, icon, toolId) => (
-    <button 
+    <button
       onClick={() => setActiveTool(toolId)}
       className={`flex flex-col items-center justify-center p-2 w-full hover:bg-gray-300 ${activeTool === toolId ? 'bg-gray-300' : ''}`}
     >
@@ -354,7 +416,6 @@ function TransformModal({ imageUrl, onClose, onTransform, onSave }) {
             <h2 className="text-lg"> </h2>
           </div>
           <div className="flex items-center gap-4">
-    
           </div>
         </div>
 
@@ -367,6 +428,7 @@ function TransformModal({ imageUrl, onClose, onTransform, onSave }) {
             {toolButton('Rotate', <IconRotate />, 'rotate')}
             {toolButton('Filters', <IconFilters />, 'filters')}
             {toolButton('Flip', <IconFlip />, 'flip')}
+            {toolButton('Mirror', <IconMirror />, 'mirror')}
             {toolButton('Crop', <IconCrop />, 'crop')}
             {toolButton('Resize', <IconResize />, 'resize')}
             {toolButton('BG Remove', <IconBgRemove />, 'bgremove')}

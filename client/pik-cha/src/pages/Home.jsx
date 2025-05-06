@@ -7,11 +7,14 @@ import TransformModal from '../components/TransformModal.jsx';
 import SaveFormatModal from '../components/SaveFormatModal.jsx';
 
 const Home = () => {
+  const dispatch = useDispatch();
   const [selectedImage, setSelectedImage] = useState(null);
   const [editedImages, setEditedImages] = useState([]);
   const [menuVisible, setMenuVisible] = useState(false);
   const [urlModalVisible, setUrlModalVisible] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
+  const [error, setError] = useState('');
+  const [showTransformModal, setShowTransformModal] = useState(false);
   const fileInputRef = useRef(null);
   const editorRef = useRef(null);
   const [showTransformModal, setShowTransformModal] = useState(false);
@@ -44,6 +47,23 @@ const Home = () => {
       const reader = new FileReader();
       reader.onload = (e) => handleImageSelect(e.target.result);
       reader.readAsDataURL(file);
+
+      // Upload image to backend
+      const formData = new FormData();
+      formData.append('image', file);
+      try {
+        const resultAction = await dispatch(uploadImageAsync(formData));
+        if (uploadImageAsync.fulfilled.match(resultAction)) {
+          setUploadedImage(resultAction.payload);
+          setSelectedImage(resultAction.payload.url);
+        } else {
+          setError(resultAction.payload || 'Upload failed');
+        }
+      } catch (err) {
+        setError('Upload failed');
+      }
+    } else {
+      setError('Please select a valid image file.');
     }
   };
 
@@ -52,7 +72,7 @@ const Home = () => {
     event.stopPropagation();
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = async (event) => {
     event.preventDefault();
     event.stopPropagation();
     const file = event.dataTransfer.files[0];

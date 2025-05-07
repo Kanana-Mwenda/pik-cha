@@ -1,26 +1,21 @@
 from server.config import create_app, db, api
-from server.routes.user import UserResource, UserListResource
-from server.routes.auth import SignupResource, LoginResource, MeResource
-from server.routes.image import UploadImageResource, ListImagesResource, TransformImageResource, DownloadImageResource, ImageDetailResource
+from server.routes.user import UserResource, UserListResource, user_bp
+from server.routes.auth import SignupResource, LoginResource, MeResource, auth_bp
+from server.routes.image import UploadImageResource, ListImagesResource, TransformImageResource, DownloadImageResource, ImageDetailResource, image_bp
+from flask_jwt_extended import JWTManager
+import os
 
 # Create app instance
 app = create_app()
 
-# User routes
-api.add_resource(UserListResource, '/api/users')  
-api.add_resource(UserResource, '/api/users/<int:id>')
+# Configure JWT
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'pikcha-jwt-secret-key-2024')
+jwt = JWTManager(app)
 
-# Auth routes
-api.add_resource(SignupResource, '/api/auth/signup')
-api.add_resource(LoginResource, '/api/auth/login')
-api.add_resource(MeResource, '/api/auth/me')
-
-# Image routes
-api.add_resource(UploadImageResource, "/api/images/upload")
-api.add_resource(ListImagesResource, "/api/images")
-api.add_resource(TransformImageResource, "/api/images/<string:image_id>/transform")
-api.add_resource(DownloadImageResource, "/api/images/download/<string:filename>")
-api.add_resource(ImageDetailResource, "/api/images/<string:image_id>")
+# Register blueprints
+app.register_blueprint(auth_bp, url_prefix="/api/auth")
+app.register_blueprint(image_bp, url_prefix="/api/images")
+app.register_blueprint(user_bp, url_prefix="/api/users")
 
 if __name__ == '__main__':
     app.run(debug=True)

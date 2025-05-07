@@ -182,6 +182,9 @@ class TransformImageResource(Resource):
             elif transformation == "format":
                 fmt = options.get("format", "JPEG").upper()
                 metadata.update({"format": fmt})
+                ext = fmt.lower()
+                if ext == "jpeg":
+                    ext = "jpg"
 
             elif transformation == "filter":
                 from PIL import ImageOps
@@ -211,7 +214,7 @@ class TransformImageResource(Resource):
             else:
                 return {"error": f"Unsupported transformation type: {transformation}"}, 400
 
-            ext = "png" if transformation == "remove_bg" else "jpg"
+            ext = "png" if transformation == "remove_bg" else (ext if transformation == "format" else "jpg")
             new_filename = f"{image.id}_{transformation}.{ext}"
             transformed_path = os.path.join(app.config["UPLOAD_FOLDER"], new_filename)
 
@@ -310,8 +313,8 @@ class ImageDetailResource(Resource):
             return {"error": str(e)}, 400
 
 # Add resources to the Blueprint
-api.add_resource(UploadImageResource, "/upload")
+api.add_resource(UploadImageResource, "/")
 api.add_resource(ListImagesResource, "/")
 api.add_resource(TransformImageResource, "/<string:image_id>/transform")
-api.add_resource(DownloadImageResource, "/<string:filename>/download")
+api.add_resource(DownloadImageResource, "/download/<string:filename>")
 api.add_resource(ImageDetailResource, "/<string:image_id>")

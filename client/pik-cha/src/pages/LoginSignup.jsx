@@ -1,133 +1,101 @@
 import React, { useState } from 'react';
-import { FaUser, FaLock, FaEnvelope } from "react-icons/fa";
-import bgImage from '../assets/bg2.jpeg';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../store/AuthContext';
+import toast from 'react-hot-toast';
 
 const LoginSignup = () => {
-  const [action, setAction] = useState('login');
+  const [isLogin, setIsLogin] = useState(true);
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    password: '',
+  });
+  const { login, signup } = useAuth();
+  const navigate = useNavigate();
 
-  const signupLink = () => setAction('signup');
-  const loginLink = () => setAction('login');
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (isLogin) {
+        await login(formData.email, formData.password);
+        toast.success('Login successful!');
+      } else {
+        await signup(formData.username, formData.email, formData.password);
+        toast.success('Account created successfully!');
+      }
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error(error.message || 'An error occurred');
+    }
+  };
 
   return (
-    <div className="w-[1000px] h-[600px] bg-white rounded-lg text-black flex items-center justify-between overflow-hidden transition-all duration-200 mx-auto relative">
-      <div className="w-1/2 h-full min-w-[500px] max-w-[500px]">
-        <img
-          src={bgImage}
-          alt="Background"
-          className="w-full h-full object-cover rounded-lg"
-        />
+    <div className="min-h-[80vh] flex items-center justify-center">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h2 className="text-2xl font-bold text-center mb-6">
+          {isLogin ? 'Welcome Back' : 'Create Account'}
+        </h2>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {!isLogin && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Username</label>
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                required
+              />
+            </div>
+          )}
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Password</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              required
+            />
+          </div>
+          
+          <button
+            type="submit"
+            className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          >
+            {isLogin ? 'Sign In' : 'Sign Up'}
+          </button>
+        </form>
+        
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => setIsLogin(!isLogin)}
+            className="text-indigo-600 hover:text-indigo-500"
+          >
+            {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+          </button>
+        </div>
       </div>
-
-      {action === 'login' && (
-        <div className="w-1/2 p-10 z-10">
-          <form>
-            <h1 className="text-4xl text-center font-semibold mb-6">Login</h1>
-
-            <div className="relative w-full h-[50px] mb-6">
-              <input
-                type="text"
-                placeholder="Username"
-                required
-                className="w-full h-full border-2 border-black rounded-full px-5 pr-12 text-base placeholder-gray-500"
-              />
-              <FaUser className="absolute right-5 top-1/2 transform -translate-y-1/2 text-base" />
-            </div>
-
-            <div className="relative w-full h-[50px] mb-4">
-              <input
-                type="password"
-                placeholder="Password"
-                required
-                className="w-full h-full border-2 border-black rounded-full px-5 pr-12 text-base placeholder-gray-500"
-              />
-              <FaLock className="absolute right-5 top-1/2 transform -translate-y-1/2 text-base" />
-            </div>
-
-            <div className="flex justify-between text-sm mb-4">
-              <label>
-                <input type="checkbox" className="mr-2" /> Remember me
-              </label>
-              <a href="#" className="text-blue-800 hover:underline">Forgot password?</a>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full h-[45px] bg-black text-white font-bold rounded-full cursor-pointer"
-            >
-              Login
-            </button>
-
-            <div className="text-sm text-center mt-5">
-              <p>
-                Don't have an account?{' '}
-                <a href="#" onClick={signupLink} className="text-blue-800 font-semibold hover:underline">
-                  Sign Up
-                </a>
-              </p>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {action === 'signup' && (
-        <div className="absolute right-0 w-[45%] p-10 z-10">
-          <form>
-            <h1 className="text-4xl text-center font-semibold mb-6">Signup</h1>
-
-            <div className="relative w-full h-[50px] mb-6">
-              <input
-                type="text"
-                placeholder="Username"
-                required
-                className="w-full h-full border-2 border-black rounded-full px-5 pr-12 text-base placeholder-gray-500"
-              />
-              <FaUser className="absolute right-5 top-1/2 transform -translate-y-1/2 text-base" />
-            </div>
-
-            <div className="relative w-full h-[50px] mb-6">
-              <input
-                type="email"
-                placeholder="Email"
-                required
-                className="w-full h-full border-2 border-black rounded-full px-5 pr-12 text-base placeholder-gray-500"
-              />
-              <FaEnvelope className="absolute right-5 top-1/2 transform -translate-y-1/2 text-base" />
-            </div>
-
-            <div className="relative w-full h-[50px] mb-4">
-              <input
-                type="password"
-                placeholder="Password"
-                required
-                className="w-full h-full border-2 border-black rounded-full px-5 pr-12 text-base placeholder-gray-500"
-              />
-              <FaLock className="absolute right-5 top-1/2 transform -translate-y-1/2 text-base" />
-            </div>
-
-            <div className="text-sm mb-4">
-              <label>
-                <input type="checkbox" className="mr-2" /> I agree to the terms & conditions
-              </label>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full h-[45px] bg-black text-white font-bold rounded-full cursor-pointer"
-            >
-              Sign Up
-            </button>
-
-            <div className="text-sm text-center mt-5">
-              <p>
-                Already have an account?{' '}
-                <a href="#" onClick={loginLink} className="text-blue-800 font-semibold hover:underline">
-                  Login
-                </a>
-              </p>
-            </div>
-          </form>
-        </div>
-      )}
     </div>
   );
 };

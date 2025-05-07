@@ -1,9 +1,9 @@
 from flask import Blueprint, request
 from flask_restful import Api, Resource
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from server.models.user import User
 from server.schemas.user_schema import UserSchema
 from server.config import db
+from server.utils.jwt_handler import generate_token
 
 # Define the Blueprint
 auth_bp = Blueprint("auth", __name__)
@@ -27,7 +27,7 @@ class SignupResource(Resource):
         db.session.add(user)
         db.session.commit()
 
-        access_token = create_access_token(identity=user.id)
+        access_token = generate_token(user.id)
 
         return {
             "message": "User created successfully",
@@ -45,7 +45,7 @@ class LoginResource(Resource):
         if not user or not user.check_password(password):
             return {"error": "Invalid email or password"}, 401
 
-        access_token = create_access_token(identity=user.id)
+        access_token = generate_token(user.id)
 
         return {
             "message": "Login successful",
@@ -54,15 +54,22 @@ class LoginResource(Resource):
         }, 200
 
 class MeResource(Resource):
-    @jwt_required()
     def get(self):
-        user_id = get_jwt_identity()
-        user = User.query.get(user_id)
+        auth_header = request.headers.get("Authorization")
+        if not auth_header:
+            return {"error": "Authorization header required"}, 401
 
-        if not user:
-            return {"error": "User not found"}, 404
+        try:
+            token = auth_header.split(" ")[1]
+            user_id = decode_token(token)
+            user = User.query.get(user_id)
 
-        return user_schema.dump(user), 200
+            if not user:
+                return {"error": "User not found"}, 404
+
+            return user_schema.dump(user), 200
+        except Exception as e:
+            return {"error": str(e)}, 401
 
 # Add resources to the Blueprint
 api.add_resource(SignupResource, "/signup")

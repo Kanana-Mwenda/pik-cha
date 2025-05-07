@@ -88,4 +88,6 @@ class UserProfileResource(Resource):
         return user_schema.dump(user), 200
 
 # Add resources to the Blueprint
+api.add_resource(UserListResource, "/")
+api.add_resource(UserResource, "/<int:id>")
 api.add_resource(UserProfileResource, "/profile")

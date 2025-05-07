@@ -6,14 +6,14 @@ from flask_restful import Api
 from sqlalchemy import MetaData
 from sqlalchemy.orm import declarative_base
 from dotenv import load_dotenv
-from server.extensions import db, migrate, jwt  # Import from extensions
-from server.routes.auth import auth_bp
-from server.routes.image import image_bp
-from server.routes.user import user_bp
+from server.extensions import db, migrate, jwt
 
 
 # Load .env variables
 load_dotenv()
+
+# Create API instance
+api = Api()
 
 # Declarative base with naming convention
 metadata = MetaData(naming_convention={
@@ -61,11 +61,6 @@ def create_app(config_name="development"):
     app = Flask(__name__)
     app.config.from_object(config_map[config_name])
 
-    # Register blueprints
-    app.register_blueprint(auth_bp, url_prefix="/api/auth")
-    app.register_blueprint(image_bp, url_prefix="/api/images")
-    app.register_blueprint(user_bp, url_prefix="/api/users")
-
     # Ensure upload folder exists
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
@@ -74,7 +69,7 @@ def create_app(config_name="development"):
     jwt.init_app(app)
     migrate.init_app(app, db)
     CORS(app, supports_credentials=True)
-    Api(app)
+    api.init_app(app)
     app.secret_key = app.config["SECRET_KEY"]
     app.json.compact = False
 

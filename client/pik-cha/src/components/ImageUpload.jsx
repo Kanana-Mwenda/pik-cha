@@ -1,38 +1,45 @@
 // src/components/ImageUpload.jsx
-import { useState } from 'react';
-import { validateFileType } from '../utils/validateFileType';
+import React, { useState, useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { useImages } from '../store/ImageContext';
+import toast from 'react-hot-toast';
 import TransformModal from './TransformModal';
 
 function ImageUpload() {
-  const [selectedFile, setSelectedFile] = useState(null);
+  const { uploadImage, uploadProgress } = useImages();
   const [previewUrl, setPreviewUrl] = useState(null);
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-
+  const onDrop = useCallback(async (acceptedFiles) => {
+    const file = acceptedFiles[0];
     if (!file) return;
 
-    if (!validateFileType(file)) {
-      setError("Unsupported file type. Please upload a JPG or PNG.");
+    if (!file.type.startsWith('image/')) {
+      setError("Please upload an image file");
       return;
     }
 
     setError("");
-    setSelectedFile(file);
     setPreviewUrl(URL.createObjectURL(file));
-  };
 
-  const handleUpload = () => {
-    if (!selectedFile) {
-      setError("No file selected!");
-      return;
+    try {
+      await uploadImage(file);
+      toast.success('Image uploaded successfully!');
+      setPreviewUrl(null);
+    } catch (err) {
+      setError(err.message);
+      toast.error('Upload failed: ' + err.message);
     }
+  }, [uploadImage]);
 
-    console.log("Pretending to upload:", selectedFile.name);
-    alert("Upload successful! (Simulated)");
-  };
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'image/*': ['.jpeg', '.jpg', '.png', '.gif']
+    },
+    maxFiles: 1
+  });
 
   const handleEdit = () => {
     if (!previewUrl) {
@@ -43,39 +50,44 @@ function ImageUpload() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-4 border border-dashed border-gray-400 rounded-lg">
-      <input 
-        type="file" 
-        accept="image/*" 
-        onChange={handleFileChange} 
-        className="mb-4"
-      />
+    <div className="space-y-4">
+      <div
+        {...getRootProps()}
+        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
+          ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-400'}`}
+      >
+        <input {...getInputProps()} />
+        {isDragActive ? (
+          <p className="text-blue-500">Drop the image here...</p>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-gray-600">Drag and drop an image here, or click to select</p>
+            <p className="text-sm text-gray-500">Supports: JPG, PNG, GIF</p>
+          </div>
+        )}
+      </div>
 
       {previewUrl && (
-        <>
-          <img 
-            src={previewUrl} 
-            alt="Selected" 
-            className="w-40 h-40 object-cover mb-4 rounded-lg"
+        <div className="space-y-4">
+          <img
+            src={previewUrl}
+            alt="Preview"
+            className="max-h-64 mx-auto rounded-lg shadow-lg"
           />
-          <div className="flex gap-4">
-            <button 
-              onClick={handleUpload}
-              className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              Upload
-            </button>
-            <button 
-              onClick={handleEdit}
-              className="px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-            >
-              Edit
-            </button>
-          </div>
-        </>
+          {uploadProgress > 0 && uploadProgress < 100 && (
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
+          )}
+        </div>
       )}
 
-      {error && <p className="text-red-500 mt-2">{error}</p>}
+      {error && (
+        <p className="text-red-500 text-sm text-center">{error}</p>
+      )}
 
       {/* Show Transform Modal */}
       {showModal && (

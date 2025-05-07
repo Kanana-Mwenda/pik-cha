@@ -1,9 +1,0 @@
-// src/utils/formatDate.js
-
-export function formatDate(dateString) {
-    if (!dateString) return "";
-  
-    const options = { year: "numeric", month: "short", day: "numeric" };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  }
-  

@@ -11,7 +11,6 @@ from server.routes.auth import auth_bp
 from server.routes.image import image_bp
 from server.routes.user import user_bp
 
-
 # Load .env variables
 load_dotenv()
 
@@ -21,6 +20,8 @@ metadata = MetaData(naming_convention={
 })
 Base = declarative_base(metadata=metadata)
 
+# Global Api instance
+api = Api()
 
 # Config Classes
 class Config:
@@ -74,7 +75,8 @@ def create_app(config_name="development"):
     jwt.init_app(app)
     migrate.init_app(app, db)
     CORS(app, supports_credentials=True)
-    Api(app)
+    api.init_app(app)  # Register the global api with the app
+
     app.secret_key = app.config["SECRET_KEY"]
     app.json.compact = False
 

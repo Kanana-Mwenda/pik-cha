@@ -17,36 +17,47 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Initialize axios defaults
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      checkAuth();
-    } else {
-      setLoading(false);
-      setIsAuthenticated(false);
     }
   }, []);
 
-  const checkAuth = async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/api/auth/me`);
-      if (response.data) {
-        setUser(response.data);
-        setIsAuthenticated(true);
-      } else {
-        throw new Error('Invalid user data');
+  // Check authentication status on mount and token change
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setLoading(false);
+        setIsAuthenticated(false);
+        setUser(null);
+        return;
       }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      localStorage.removeItem('token');
-      delete axios.defaults.headers.common['Authorization'];
-      setUser(null);
-      setIsAuthenticated(false);
-    } finally {
-      setLoading(false);
-    }
-  };
+
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/auth/me`);
+        if (response.data) {
+          setUser(response.data);
+          setIsAuthenticated(true);
+          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        } else {
+          throw new Error('Invalid user data');
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        localStorage.removeItem('token');
+        delete axios.defaults.headers.common['Authorization'];
+        setUser(null);
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuthStatus();
+  }, []);
 
   const login = async (email, password) => {
     try {

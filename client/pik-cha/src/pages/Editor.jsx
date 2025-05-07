@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 import { useAuth } from '../store/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import './EditorCropper.css';
 
 const tools = [
   {
@@ -62,12 +63,32 @@ const Editor = () => {
   const [activeTool, setActiveTool] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [toolSettings, setToolSettings] = useState({});
+  const [originalImageSize, setOriginalImageSize] = useState({ width: 0, height: 0 });
+  const [initialCropSet, setInitialCropSet] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/loginsignup');
     }
   }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    const imgUrl = transformedImage?.transformed_url
+      ? (transformedImage.transformed_url.startsWith('http')
+          ? transformedImage.transformed_url
+          : `${API_BASE_URL}${transformedImage.transformed_url}`)
+      : selectedImage?.original_url
+        ? (selectedImage.original_url.startsWith('http')
+            ? selectedImage.original_url
+            : `${API_BASE_URL}${selectedImage.original_url}`)
+        : '';
+    if (!imgUrl) return;
+    const img = new window.Image();
+    img.onload = () => {
+      setOriginalImageSize({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.src = imgUrl;
+  }, [selectedImage, transformedImage]);
 
   const onDrop = useCallback(async (acceptedFiles) => {
     const file = acceptedFiles[0];
@@ -173,7 +194,10 @@ const Editor = () => {
             bottom: Number(settings.bottom),
           };
           if (
-            isNaN(options.left) || isNaN(options.top) || isNaN(options.right) || isNaN(options.bottom)
+            isNaN(options.left) ||
+            isNaN(options.top) ||
+            isNaN(options.right) ||
+            isNaN(options.bottom)
           ) {
             toast.error('Please enter valid crop values.');
             setIsProcessing(false);
@@ -214,7 +238,8 @@ const Editor = () => {
 
       const payload = { type, options };
       console.log('Transform payload:', payload);
-      const response = await fetch(`${API_BASE_URL}/api/images/${selectedImage.id}/transform`, {
+      const imageId = transformedImage?.id || selectedImage.id;
+      const response = await fetch(`${API_BASE_URL}/api/images/${imageId}/transform`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -245,10 +270,14 @@ const Editor = () => {
   };
 
   const handleDownload = async () => {
-    if (!transformedImage) return;
+    const imageToDownload = transformedImage?.transformed_url || selectedImage?.original_url;
+    if (!imageToDownload) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/images/download/${transformedImage.filename}`, {
+      const url = imageToDownload.startsWith('http')
+        ? imageToDownload
+        : `${API_BASE_URL}${imageToDownload}`;
+      const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
@@ -257,19 +286,32 @@ const Editor = () => {
       if (!response.ok) throw new Error('Download failed');
 
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = transformedImage.filename;
+      a.href = window.URL.createObjectURL(blob);
+      a.download = url.split('/').pop();
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
+      window.URL.revokeObjectURL(a.href);
       document.body.removeChild(a);
       toast.success('Image downloaded successfully!');
     } catch (error) {
       toast.error(error.message || 'Failed to download image');
     }
   };
+
+  const isCropInvalid =
+    activeTool && activeTool.name === 'Crop' && (
+      isNaN(Number(toolSettings.left)) ||
+      isNaN(Number(toolSettings.top)) ||
+      isNaN(Number(toolSettings.right)) ||
+      isNaN(Number(toolSettings.bottom)) ||
+      Number(toolSettings.left) < 0 ||
+      Number(toolSettings.top) < 0 ||
+      Number(toolSettings.right) > originalImageSize.width ||
+      Number(toolSettings.bottom) > originalImageSize.height ||
+      Number(toolSettings.left) >= Number(toolSettings.right) ||
+      Number(toolSettings.top) >= Number(toolSettings.bottom)
+    );
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
@@ -339,28 +381,29 @@ const Editor = () => {
                   </button>
                 </div>
 
-                <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                  {transformedImage?.transformed_url || selectedImage?.original_url ? (
-                    <img
-                      src={transformedImage?.transformed_url || selectedImage?.original_url}
-                      alt="Preview"
-                      className="w-full h-full object-contain"
-                      onError={(e) => {
-                        console.error('Image load error:', e);
-                        console.log('Failed image URL:', transformedImage?.transformed_url || selectedImage?.original_url);
-                        console.log('Image element:', e.target);
-                        toast.error('Failed to load image preview');
-                      }}
-                      onLoad={(e) => {
-                        console.log('Image loaded successfully:', e.target.src);
-                      }}
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full">
-                      <p className="text-gray-500">No image preview available</p>
-                    </div>
-                  )}
-                </div>
+                <img
+                  src={
+                    transformedImage?.transformed_url
+                      ? (transformedImage.transformed_url.startsWith('http')
+                          ? transformedImage.transformed_url
+                          : `${API_BASE_URL}${transformedImage.transformed_url}`)
+                      : selectedImage?.original_url
+                        ? (selectedImage.original_url.startsWith('http')
+                            ? selectedImage.original_url
+                            : `${API_BASE_URL}${selectedImage.original_url}`)
+                        : ''
+                  }
+                  alt="Preview"
+                  className="w-full h-auto max-h-[350px] object-contain"
+                  onError={(e) => {
+                    console.error('Image load error:', e);
+                    console.log('Failed image URL:', transformedImage?.transformed_url || selectedImage?.original_url);
+                    toast.error('Failed to load image preview');
+                  }}
+                  onLoad={(e) => {
+                    console.log('Image loaded successfully:', e.target.src);
+                  }}
+                />
 
                 {/* Tool Settings */}
                 <AnimatePresence>
@@ -391,46 +434,6 @@ const Editor = () => {
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 value={toolSettings.height || ''}
                                 onChange={(e) => setToolSettings({ ...toolSettings, height: e.target.value })}
-                              />
-                            </div>
-                          </>
-                        )}
-                        {activeTool.name === 'Crop' && (
-                          <>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700">Left</label>
-                              <input
-                                type="number"
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                value={toolSettings.left || ''}
-                                onChange={(e) => setToolSettings({ ...toolSettings, left: e.target.value })}
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700">Top</label>
-                              <input
-                                type="number"
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                value={toolSettings.top || ''}
-                                onChange={(e) => setToolSettings({ ...toolSettings, top: e.target.value })}
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700">Right</label>
-                              <input
-                                type="number"
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                value={toolSettings.right || ''}
-                                onChange={(e) => setToolSettings({ ...toolSettings, right: e.target.value })}
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700">Bottom</label>
-                              <input
-                                type="number"
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                value={toolSettings.bottom || ''}
-                                onChange={(e) => setToolSettings({ ...toolSettings, bottom: e.target.value })}
                               />
                             </div>
                           </>
@@ -477,12 +480,63 @@ const Editor = () => {
                         {activeTool.name === 'Remove Background' && (
                           <div className="text-sm text-gray-500">No settings required. Just click Apply!</div>
                         )}
+                        {activeTool.name === 'Crop' && (
+                          <>
+                            <div className="mb-2 text-xs text-gray-500">
+                              Image size: {originalImageSize.width} x {originalImageSize.height} px
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700">Left</label>
+                              <input
+                                type="number"
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                value={toolSettings.left || ''}
+                                min={0}
+                                max={toolSettings.right || originalImageSize.width}
+                                onChange={(e) => setToolSettings({ ...toolSettings, left: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700">Top</label>
+                              <input
+                                type="number"
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                value={toolSettings.top || ''}
+                                min={0}
+                                max={toolSettings.bottom || originalImageSize.height}
+                                onChange={(e) => setToolSettings({ ...toolSettings, top: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700">Right</label>
+                              <input
+                                type="number"
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                value={toolSettings.right || ''}
+                                min={toolSettings.left || 0}
+                                max={originalImageSize.width}
+                                onChange={(e) => setToolSettings({ ...toolSettings, right: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700">Bottom</label>
+                              <input
+                                type="number"
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                value={toolSettings.bottom || ''}
+                                min={toolSettings.top || 0}
+                                max={originalImageSize.height}
+                                onChange={(e) => setToolSettings({ ...toolSettings, bottom: e.target.value })}
+                              />
+                            </div>
+                          </>
+                        )}
                       </div>
 
                       <div className="mt-6">
                         <button
                           onClick={() => handleTransform(activeTool.name, toolSettings)}
-                          disabled={isProcessing}
+                          disabled={isProcessing || isCropInvalid}
                           className="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
                         >
                           {isProcessing ? 'Processing...' : 'Apply'}

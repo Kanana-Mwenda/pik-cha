@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import * as HeroIcons from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
+import axios from 'axios';
 
 const Gallery = () => {
   const [images, setImages] = useState([]);
@@ -15,18 +16,29 @@ const Gallery = () => {
 
   const fetchImages = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/images/`, {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('You must be logged in to view images');
+        return;
+      }
+
+      console.log('Fetching images with token:', token);
+      const response = await axios.get(`${API_BASE_URL}/api/images/`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
-      if (!response.ok) throw new Error('Failed to fetch images');
-
-      const data = await response.json();
-      setImages(data);
+      console.log('Received images:', response.data);
+      setImages(response.data);
     } catch (error) {
-      toast.error(error.message || 'Failed to load images');
+      console.error('Error fetching images:', error);
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+        toast.error(error.response.data.error || 'Failed to load images');
+      } else {
+        toast.error('Failed to load images');
+      }
     } finally {
       setLoading(false);
     }
@@ -34,16 +46,20 @@ const Gallery = () => {
 
   const handleDownload = async (image) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/images/download/${image.filename}`, {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('You must be logged in to download images');
+        return;
+      }
+
+      const response = await axios.get(`${API_BASE_URL}/api/images/download/${image.filename}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${token}`,
         },
+        responseType: 'blob',
       });
 
-      if (!response.ok) throw new Error('Download failed');
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
       const a = document.createElement('a');
       a.href = url;
       a.download = image.filename;
@@ -53,25 +69,30 @@ const Gallery = () => {
       document.body.removeChild(a);
       toast.success('Image downloaded successfully!');
     } catch (error) {
-      toast.error(error.message || 'Failed to download image');
+      console.error('Error downloading image:', error);
+      toast.error('Failed to download image');
     }
   };
 
   const handleDelete = async (imageId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/images/${imageId}`, {
-        method: 'DELETE',
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('You must be logged in to delete images');
+        return;
+      }
+
+      await axios.delete(`${API_BASE_URL}/api/images/${imageId}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${token}`,
         },
       });
-
-      if (!response.ok) throw new Error('Delete failed');
 
       setImages(images.filter(img => img.id !== imageId));
       toast.success('Image deleted successfully!');
     } catch (error) {
-      toast.error(error.message || 'Failed to delete image');
+      console.error('Error deleting image:', error);
+      toast.error('Failed to delete image');
     }
   };
 
@@ -108,7 +129,11 @@ const Gallery = () => {
                 className="group relative aspect-square bg-gray-100 rounded-lg overflow-hidden"
               >
                 <img
-                  src={image.original_url}
+                  src={
+                    image.original_url.startsWith('http')
+                      ? image.original_url
+                      : `${API_BASE_URL}${image.original_url}`
+                  }
                   alt={image.filename}
                   className="w-full h-full object-cover"
                 />
@@ -153,7 +178,11 @@ const Gallery = () => {
               onClick={e => e.stopPropagation()}
             >
               <img
-                src={selectedImage.original_url}
+                src={
+                  selectedImage.original_url.startsWith('http')
+                    ? selectedImage.original_url
+                    : `${API_BASE_URL}${selectedImage.original_url}`
+                }
                 alt={selectedImage.filename}
                 className="w-full h-auto rounded-lg"
               />

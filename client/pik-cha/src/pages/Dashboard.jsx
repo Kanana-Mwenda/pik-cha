@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../store/AuthContext';
 import * as HeroIcons from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+import { API_BASE_URL } from '../config';
+import axios from 'axios';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -21,23 +23,25 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5001/api/images/', {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("You must be logged in to view images");
+        return;
+      }
+      const response = await axios.get(`${API_BASE_URL}/api/images/`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${token}`,
         },
       });
-
-      if (!response.ok) throw new Error('Failed to fetch images');
-
-      const data = await response.json();
-      setRecentImages(data.slice(0, 6)); // Get 6 most recent images
+      setRecentImages(response.data.slice(0, 6)); // Get 6 most recent images
       setStats({
-        totalImages: data.length,
-        transformations: data.reduce((acc, img) => acc + (img.transformations || 0), 0),
-        storageUsed: `${(data.reduce((acc, img) => acc + (img.size || 0), 0) / (1024 * 1024)).toFixed(2)} MB`,
+        totalImages: response.data.length,
+        transformations: response.data.reduce((acc, img) => acc + (img.transformations || 0), 0),
+        storageUsed: `${(response.data.reduce((acc, img) => acc + (img.size || 0), 0) / (1024 * 1024)).toFixed(2)} MB`,
       });
     } catch (error) {
-      toast.error(error.message || 'Failed to load dashboard data');
+      console.error("Error fetching images:", error);
+      toast.error("Failed to fetch images");
     } finally {
       setLoading(false);
     }
@@ -130,6 +134,9 @@ const Dashboard = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Transformations</p>
                 <p className="text-2xl font-semibold text-gray-900">{stats.transformations}</p>
+                {stats.transformations === 0 && (
+                  <p className="text-xs text-gray-400">(Backend does not provide transformation count)</p>
+                )}
               </div>
             </div>
           </motion.div>
@@ -147,6 +154,9 @@ const Dashboard = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Storage Used</p>
                 <p className="text-2xl font-semibold text-gray-900">{stats.storageUsed}</p>
+                {stats.storageUsed === '0.00 MB' && (
+                  <p className="text-xs text-gray-400">(Backend does not provide image size)</p>
+                )}
               </div>
             </div>
           </motion.div>
@@ -202,9 +212,13 @@ const Dashboard = () => {
                   className="group relative aspect-square bg-gray-100 rounded-lg overflow-hidden"
                 >
                   <img
-                    src={image.original_url}
+                    src={
+                      image.original_url.startsWith('http')
+                        ? image.original_url
+                        : `${API_BASE_URL}${image.original_url}`
+                    }
                     alt={image.filename}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover rounded-lg shadow"
                   />
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
                     <Link

@@ -3,7 +3,7 @@ from flask_restful import Api, Resource
 from server.models.user import User
 from server.schemas.user_schema import UserSchema
 from server.config import db
-from server.utils.jwt_handler import generate_token
+from server.utils.jwt_handler import generate_token, decode_token
 
 # Define the Blueprint
 auth_bp = Blueprint("auth", __name__)
@@ -56,19 +56,31 @@ class LoginResource(Resource):
 class MeResource(Resource):
     def get(self):
         auth_header = request.headers.get("Authorization")
-        if not auth_header:
+        if not auth_header or not auth_header.startswith('Bearer '):
+            print("Invalid Authorization header:", auth_header)
             return {"error": "Authorization header required"}, 401
 
         try:
             token = auth_header.split(" ")[1]
+            print("Validating token...")
             user_id = decode_token(token)
-            user = User.query.get(user_id)
+            
+            if not user_id:
+                print("Token validation failed")
+                return {"error": "Invalid or expired token"}, 401
 
+            print(f"Token validated for user_id: {user_id}")
+            user = User.query.get(user_id)
+            
             if not user:
+                print(f"User not found for user_id: {user_id}")
                 return {"error": "User not found"}, 404
 
+            print(f"User found: {user.username}")
             return user_schema.dump(user), 200
+            
         except Exception as e:
+            print(f"Error in MeResource: {str(e)}")
             return {"error": str(e)}, 401
 
 # Add resources to the Blueprint

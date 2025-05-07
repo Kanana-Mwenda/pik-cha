@@ -93,21 +93,60 @@ class UploadImageResource(Resource):
 class ListImagesResource(Resource):
     def get(self):
         auth_header = request.headers.get("Authorization")
-        if not auth_header:
-            return {"error": "Authorization header required"}, 401
+        if not auth_header or not auth_header.startswith('Bearer '):
+            print("Invalid Authorization header:", auth_header)
+            return {"error": "Invalid Authorization header"}, 401
 
         try:
             token = auth_header.split(" ")[1]
             user_id = decode_token(token)
+            if not user_id:
+                print("Invalid token or user_id not found")
+                return {"error": "Invalid token"}, 401
 
+            print(f"Fetching images for user_id: {user_id}")
             user = User.query.get(user_id)
             if not user:
+                print(f"User not found for user_id: {user_id}")
                 return {"error": "User not found"}, 404
 
-            images = Image.query.filter_by(user_id=user.id).all()
-            return images_schema.dump(images), 200
+            images = Image.query.filter_by(user_id=user_id).all()
+            print(f"Found {len(images)} images for user {user_id}")
+            
+            serialized_images = []
+            for img in images:
+                try:
+                    img_dict = image_schema.dump(img)
+                    # Add file size in bytes
+                    filepath = os.path.join(app.config["UPLOAD_FOLDER"], img.filename)
+                    if os.path.exists(filepath):
+                        img_dict["size"] = os.path.getsize(filepath)
+                        print(f"Image {img.filename} size: {img_dict['size']} bytes")
+                    else:
+                        print(f"Warning: Image file not found: {filepath}")
+                        img_dict["size"] = 0
+                    
+                    # Count transformations from metadata
+                    transformations = 0
+                    if img.image_metadata:
+                        transformations = sum(1 for k in img.image_metadata.keys() if k in [
+                            "width", "height", "crop_box", "rotation_angle", 
+                            "watermark", "flipped", "mirrored", "compressed_quality", 
+                            "format", "filter", "background_removed"
+                        ])
+                    img_dict["transformations"] = transformations
+                    print(f"Image {img.filename} transformations: {transformations}")
+                    
+                    serialized_images.append(img_dict)
+                except Exception as e:
+                    print(f"Error processing image {img.filename}: {str(e)}")
+                    continue
+            
+            print(f"Returning {len(serialized_images)} serialized images")
+            return serialized_images, 200
 
         except Exception as e:
+            print(f"Error in ListImagesResource: {str(e)}")
             return {"error": str(e)}, 400
 
 
@@ -245,15 +284,27 @@ class TransformImageResource(Resource):
             new_filename = f"{image.id}_{transformation}.{ext}"
             transformed_path = os.path.join(app.config["UPLOAD_FOLDER"], new_filename)
 
-            pil_image.save(transformed_path, quality=options.get("quality", 95))
+            print(f"Saving image: mode={pil_image.mode}, size={pil_image.size}, ext={ext}", flush=True)
+            if ext in ["jpeg", "jpg"] and pil_image.mode != "RGB":
+                pil_image = pil_image.convert("RGB")
+            try:
+                pil_image.save(transformed_path, quality=options.get("quality", 95))
+            except Exception as e:
+                print(f"Save error: {e}", flush=True)
+                return {"error": str(e)}, 400
 
-            image.transformed_url = f"/uploads/{new_filename}"
-            image.transformation_type = transformation
-            image.image_metadata = metadata
-
+            new_image = Image(
+                user_id=image.user_id,
+                filename=new_filename,
+                original_url=image.original_url,  # Keep the original image's URL
+                transformed_url=f"/uploads/{new_filename}",
+                transformation_type=transformation,
+                image_metadata=metadata,
+            )
+            db.session.add(new_image)
             db.session.commit()
 
-            return image_schema.dump(image), 200
+            return image_schema.dump(new_image), 201
 
         except Exception as e:
             return {"error": str(e)}, 400

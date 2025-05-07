@@ -27,6 +27,7 @@ class Config:
     SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "supersecretkey")
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-jwt-key")
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=7)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
     SESSION_TYPE = "filesystem"
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
     SQLALCHEMY_TRACK_MODIFICATIONS = False

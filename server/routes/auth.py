@@ -1,9 +1,13 @@
-from flask import request
-from flask_restful import Resource
+from flask import Blueprint, request
+from flask_restful import Api, Resource
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from server.models.user import User
 from server.schemas.user_schema import UserSchema
 from server.config import db
+
+# Define the Blueprint
+auth_bp = Blueprint("auth", __name__)
+api = Api(auth_bp)
 
 user_schema = UserSchema()
 
@@ -59,3 +63,8 @@ class MeResource(Resource):
             return {"error": "User not found"}, 404
 
         return user_schema.dump(user), 200
+
+# Add resources to the Blueprint
+api.add_resource(SignupResource, "/signup")
+api.add_resource(LoginResource, "/login")
+api.add_resource(MeResource, "/me")

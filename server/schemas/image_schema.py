@@ -12,6 +12,7 @@ class ImageSchema(SQLAlchemyAutoSchema):
             "transformed_url", "transformation_type",
             "image_metadata", "created_at"
         )
+    
 
 image_schema = ImageSchema()
 images_schema = ImageSchema(many=True)

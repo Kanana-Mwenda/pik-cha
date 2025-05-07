@@ -1,7 +1,8 @@
-from flask import request, send_from_directory, current_app as app
-from flask_restful import Resource
+from flask import Blueprint, request, send_from_directory, current_app as app
+from flask_restful import Api, Resource
 from werkzeug.utils import secure_filename
 from PIL import Image as PILImage
+from PIL import UnidentifiedImageError
 from rembg import remove
 
 import os
@@ -14,9 +15,15 @@ from server.models.user import User
 from server.schemas.image_schema import ImageSchema
 from server.utils.jwt_handler import decode_token
 
+# Define the Blueprint
+image_bp = Blueprint("image", __name__)
+api = Api(image_bp)
+
+# Schemas
 image_schema = ImageSchema()
 images_schema = ImageSchema(many=True)
 
+# Allowed file extensions
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 
@@ -33,15 +40,14 @@ class UploadImageResource(Resource):
         try:
             token = auth_header.split(" ")[1]
             user_id = decode_token(token)
-            user = User.query.get(user_id)
+            user = db.session.get(User, user_id)
             if not user:
                 return {"error": "User not found"}, 404
 
             if "image" not in request.files:
-                return {"error": "No image part in the request"}, 400
+                return {"error": "No image part in the request. Please check the form key."}, 400
 
             file = request.files["image"]
-
             if file.filename == "":
                 return {"error": "No file selected"}, 400
 
@@ -52,7 +58,14 @@ class UploadImageResource(Resource):
 
                 file.save(filepath)
 
-                pil_image = PILImage.open(filepath)
+                try:
+                    pil_image = PILImage.open(filepath)
+                    pil_image.verify()  # Verify that the file is a valid image
+                except UnidentifiedImageError:
+                    os.remove(filepath)  # Remove invalid file
+                    return {"error": "Uploaded file is not a valid image"}, 400
+
+                pil_image = PILImage.open(filepath)  # Reopen the image after verification
                 metadata = {
                     "format": pil_image.format,
                     "mode": pil_image.mode,
@@ -74,7 +87,7 @@ class UploadImageResource(Resource):
             return {"error": "Invalid file type"}, 400
 
         except Exception as e:
-            return {"error": str(e)}, 400
+            return {"error": f"An error occurred: {str(e)}"}, 400
 
 
 class ListImagesResource(Resource):
@@ -107,18 +120,19 @@ class TransformImageResource(Resource):
         try:
             token = auth_header.split(" ")[1]
             user_id = decode_token(token)
-            user = User.query.get(user_id)
+            user = db.session.get(User, user_id)
             if not user:
                 return {"error": "User not found"}, 404
 
-            image = Image.query.get(image_id)
+            # Retrieve the image using db.session.get()
+            image = db.session.get(Image, image_id)
             if not image or image.user_id != user.id:
                 return {"error": "Image not found or unauthorized"}, 404
 
             data = request.get_json()
             transformation = data.get("type")
             options = data.get("options", {})
-            
+
             original_path = os.path.join(app.config["UPLOAD_FOLDER"], image.filename)
             pil_image = PILImage.open(original_path)
 
@@ -276,7 +290,8 @@ class ImageDetailResource(Resource):
             token = auth_header.split(" ")[1]
             user_id = decode_token(token)
 
-            image = Image.query.get(image_id)
+            # Retrieve the image using db.session.get()
+            image = db.session.get(Image, image_id)
             if not image or image.user_id != user_id:
                 return {"error": "Image not found or unauthorized"}, 404
 
@@ -290,7 +305,13 @@ class ImageDetailResource(Resource):
             db.session.delete(image)
             db.session.commit()
 
-            return {"message": "Image deleted successfully"}, 200
+            return {"message": "Image deleted successfully."}, 200
         except Exception as e:
             return {"error": str(e)}, 400
-# The above code defines a Flask RESTful API for handling image uploads, transformations, and downloads.
+
+# Add resources to the Blueprint
+api.add_resource(UploadImageResource, "/upload")
+api.add_resource(ListImagesResource, "/")
+api.add_resource(TransformImageResource, "/<string:image_id>/transform")
+api.add_resource(DownloadImageResource, "/<string:filename>/download")
+api.add_resource(ImageDetailResource, "/<string:image_id>")

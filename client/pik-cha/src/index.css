@@ -4,6 +4,55 @@
 
 body {
   @apply font-sans;
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@400;600&display=swap');
+
+:root {
+  --glass-bg: rgba(255,255,255,0.7);
+  --glass-blur: blur(8px);
+}
+
+h1, h2, h3, .futuristic-heading, .logo-text {
+  font-family: 'Orbitron', 'Inter', Arial, sans-serif;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-shadow: 0 2px 8px rgba(99,102,241,0.08);
+}
+
+/* Animated gradient background */
+@keyframes gradient-move {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+.animate-gradient {
+  background: linear-gradient(90deg, #6366f1, #a21caf, #ec4899, #06b6d4);
+  background-size: 200% 200%;
+  animation: gradient-move 8s ease-in-out infinite;
+}
+
+/* Glassmorphism utility - subtle */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 24px 0 rgba(31, 38, 135, 0.10);
+}
+
+/* Pulse animation for CTA */
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 #a21caf22; }
+  50% { box-shadow: 0 0 8px 4px #a21caf44; }
+}
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+/* Remove heavy neon/glow from all text */
+.neon {
+  text-shadow: none;
 }
 
 

@@ -9,6 +9,8 @@ import {
   ArrowPathIcon,
   DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
+import heroImage from '../assets/bglanding.png';
+import heroDemo from '../assets/hero-demo.jpg';
 
 const features = [
   {
@@ -82,11 +84,20 @@ const Home = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="max-w-3xl flex-none sm:max-w-5xl lg:max-w-none"
             >
-              <img
-                src="/hero-image.jpg"
-                alt="App screenshot"
-                className="w-[76rem] rounded-md bg-white/5 shadow-2xl ring-1 ring-white/10"
-              />
+              <div className="relative w-full h-80 sm:h-[28rem] md:h-[32rem] flex items-center justify-center">
+                <img
+                  src={heroDemo}
+                  alt="Before and After AI Background Removal"
+                  className="w-full h-80 sm:h-[28rem] md:h-[32rem] object-cover rounded-lg shadow-2xl"
+                  style={{ objectPosition: 'center' }}
+                />
+                {/* Vertical Divider */}
+                <div className="absolute left-1/2 top-0 h-full w-1 bg-white/80 shadow-lg z-10" style={{transform: 'translateX(-50%)'}}></div>
+                {/* Before Label */}
+                <div className="absolute left-4 bottom-4 bg-black/70 text-white text-xs md:text-sm font-bold px-3 py-1 rounded-full z-20">BEFORE</div>
+                {/* After Label */}
+                <div className="absolute right-4 bottom-4 bg-black/70 text-white text-xs md:text-sm font-bold px-3 py-1 rounded-full z-20">AFTER</div>
+              </div>
             </motion.div>
           </div>
         </div>

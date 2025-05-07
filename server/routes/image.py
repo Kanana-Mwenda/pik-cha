@@ -130,6 +130,7 @@ class TransformImageResource(Resource):
                 return {"error": "Image not found or unauthorized"}, 404
 
             data = request.get_json()
+            print('Transform endpoint received data:', data, flush=True)  # Debug print
             transformation = data.get("type")
             options = data.get("options", {})
 
@@ -185,6 +186,9 @@ class TransformImageResource(Resource):
                 ext = fmt.lower()
                 if ext == "jpeg":
                     ext = "jpg"
+                # Convert to RGB if saving as JPEG/JPG
+                if ext in ["jpeg", "jpg"]:
+                    pil_image = pil_image.convert("RGB")
 
             elif transformation == "filter":
                 from PIL import ImageOps
@@ -213,6 +217,29 @@ class TransformImageResource(Resource):
 
             else:
                 return {"error": f"Unsupported transformation type: {transformation}"}, 400
+
+            # --- Crop validation ---
+            if transformation == "crop":
+                left = options.get("left")
+                top = options.get("top")
+                right = options.get("right")
+                bottom = options.get("bottom")
+                width, height = pil_image.size
+                if not (0 <= left < right <= width and 0 <= top < bottom <= height):
+                    return {"error": f"Crop box must be within image bounds (0,0,{width},{height}) and left < right, top < bottom."}, 400
+
+            # --- Resize validation ---
+            if transformation == "resize":
+                width_opt = options.get("width")
+                height_opt = options.get("height")
+                if not (width_opt > 0 and height_opt > 0):
+                    return {"error": "Width and height must be positive numbers."}, 400
+
+            # --- Rotate validation ---
+            if transformation == "rotate":
+                angle = options.get("angle")
+                if angle is None or not isinstance(angle, (int, float)):
+                    return {"error": "Angle must be a number."}, 400
 
             ext = "png" if transformation == "remove_bg" else (ext if transformation == "format" else "jpg")
             new_filename = f"{image.id}_{transformation}.{ext}"
@@ -311,6 +338,10 @@ class ImageDetailResource(Resource):
             return {"message": "Image deleted successfully."}, 200
         except Exception as e:
             return {"error": str(e)}, 400
+
+@image_bp.route('/uploads/<filename>')
+def serve_uploaded_file(filename):
+    return send_from_directory(current_app.config["UPLOAD_FOLDER"], filename)
 
 # Add resources to the Blueprint
 api.add_resource(UploadImageResource, "/")

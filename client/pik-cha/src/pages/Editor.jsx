@@ -149,19 +149,90 @@ const Editor = () => {
 
     setIsProcessing(true);
     try {
+      let type = tool.toLowerCase();
+      let options = {};
+
+      // Map tool names to backend types and required options
+      switch (type) {
+        case 'resize':
+          options = {
+            width: Number(settings.width),
+            height: Number(settings.height),
+          };
+          if (!options.width || !options.height || options.width <= 0 || options.height <= 0) {
+            toast.error('Please enter valid width and height.');
+            setIsProcessing(false);
+            return;
+          }
+          break;
+        case 'crop':
+          options = {
+            left: Number(settings.left),
+            top: Number(settings.top),
+            right: Number(settings.right),
+            bottom: Number(settings.bottom),
+          };
+          if (
+            isNaN(options.left) || isNaN(options.top) || isNaN(options.right) || isNaN(options.bottom)
+          ) {
+            toast.error('Please enter valid crop values.');
+            setIsProcessing(false);
+            return;
+          }
+          break;
+        case 'rotate':
+          type = 'rotate';
+          options = {
+            angle: Number(settings.angle) || 90,
+          };
+          if (isNaN(options.angle)) {
+            toast.error('Please enter a valid angle.');
+            setIsProcessing(false);
+            return;
+          }
+          break;
+        case 'remove background':
+        case 'remove_bg':
+          type = 'remove_bg';
+          options = {};
+          break;
+        case 'format':
+          options = {
+            format: settings.format || 'png',
+          };
+          break;
+        case 'filters':
+        case 'filter':
+          type = 'filter';
+          options = {
+            filter: settings.filter || 'grayscale',
+          };
+          break;
+        default:
+          break;
+      }
+
+      const payload = { type, options };
+      console.log('Transform payload:', payload);
       const response = await fetch(`${API_BASE_URL}/api/images/${selectedImage.id}/transform`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify({
-          transformation: tool.toLowerCase(),
-          settings,
-        }),
+        body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error('Transformation failed');
+      if (!response.ok) {
+        let errorMsg = 'Transformation failed';
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.error || errorMsg;
+        } catch (e) {}
+        toast.error(errorMsg);
+        setIsProcessing(false);
+        return;
+      }
 
       const data = await response.json();
       setTransformedImage(data);
@@ -301,7 +372,6 @@ const Editor = () => {
                       className="mt-6 p-4 bg-gray-50 rounded-xl"
                     >
                       <h3 className="font-medium text-gray-900 mb-4">{activeTool.name} Settings</h3>
-                      {/* Tool-specific settings will be rendered here */}
                       <div className="space-y-4">
                         {activeTool.name === 'Resize' && (
                           <>
@@ -311,9 +381,7 @@ const Editor = () => {
                                 type="number"
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 value={toolSettings.width || ''}
-                                onChange={(e) =>
-                                  setToolSettings({ ...toolSettings, width: e.target.value })
-                                }
+                                onChange={(e) => setToolSettings({ ...toolSettings, width: e.target.value })}
                               />
                             </div>
                             <div>
@@ -322,14 +390,93 @@ const Editor = () => {
                                 type="number"
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 value={toolSettings.height || ''}
-                                onChange={(e) =>
-                                  setToolSettings({ ...toolSettings, height: e.target.value })
-                                }
+                                onChange={(e) => setToolSettings({ ...toolSettings, height: e.target.value })}
                               />
                             </div>
                           </>
                         )}
-                        {/* Add more tool-specific settings here */}
+                        {activeTool.name === 'Crop' && (
+                          <>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700">Left</label>
+                              <input
+                                type="number"
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                value={toolSettings.left || ''}
+                                onChange={(e) => setToolSettings({ ...toolSettings, left: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700">Top</label>
+                              <input
+                                type="number"
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                value={toolSettings.top || ''}
+                                onChange={(e) => setToolSettings({ ...toolSettings, top: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700">Right</label>
+                              <input
+                                type="number"
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                value={toolSettings.right || ''}
+                                onChange={(e) => setToolSettings({ ...toolSettings, right: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700">Bottom</label>
+                              <input
+                                type="number"
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                value={toolSettings.bottom || ''}
+                                onChange={(e) => setToolSettings({ ...toolSettings, bottom: e.target.value })}
+                              />
+                            </div>
+                          </>
+                        )}
+                        {activeTool.name === 'Rotate' && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Angle</label>
+                            <input
+                              type="number"
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                              value={toolSettings.angle || 90}
+                              onChange={(e) => setToolSettings({ ...toolSettings, angle: e.target.value })}
+                            />
+                          </div>
+                        )}
+                        {activeTool.name === 'Format' && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Format</label>
+                            <select
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                              value={toolSettings.format || 'png'}
+                              onChange={(e) => setToolSettings({ ...toolSettings, format: e.target.value })}
+                            >
+                              <option value="png">PNG</option>
+                              <option value="jpg">JPG</option>
+                              <option value="jpeg">JPEG</option>
+                              <option value="webp">WEBP</option>
+                            </select>
+                          </div>
+                        )}
+                        {activeTool.name === 'Filters' && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Filter</label>
+                            <select
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                              value={toolSettings.filter || 'grayscale'}
+                              onChange={(e) => setToolSettings({ ...toolSettings, filter: e.target.value })}
+                            >
+                              <option value="grayscale">Grayscale</option>
+                              <option value="sepia">Sepia</option>
+                            </select>
+                          </div>
+                        )}
+                        {activeTool.name === 'Remove Background' && (
+                          <div className="text-sm text-gray-500">No settings required. Just click Apply!</div>
+                        )}
                       </div>
 
                       <div className="mt-6">

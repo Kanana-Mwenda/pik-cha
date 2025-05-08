@@ -22,7 +22,6 @@ const Gallery = () => {
         return;
       }
 
-      console.log('Fetching images with token:', token);
       const response = await axios.get(`${API_BASE_URL}/api/images/`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -30,15 +29,10 @@ const Gallery = () => {
       });
 
       console.log('Received images:', response.data);
-      setImages(response.data);
+      setImages(response.data); // Ensure transformed_url is included in the response
     } catch (error) {
       console.error('Error fetching images:', error);
-      if (error.response) {
-        console.error('Error response:', error.response.data);
-        toast.error(error.response.data.error || 'Failed to load images');
-      } else {
-        toast.error('Failed to load images');
-      }
+      toast.error('Failed to load images');
     } finally {
       setLoading(false);
     }
@@ -130,9 +124,13 @@ const Gallery = () => {
               >
                 <img
                   src={
-                    image.original_url.startsWith('http')
-                      ? image.original_url
-                      : `${API_BASE_URL}${image.original_url}`
+                    image.transformed_url
+                      ? (image.transformed_url.startsWith('http')
+                          ? image.transformed_url
+                          : `${API_BASE_URL}${image.transformed_url}`)
+                      : (image.original_url.startsWith('http')
+                          ? image.original_url
+                          : `${API_BASE_URL}${image.original_url}`)
                   }
                   alt={image.filename}
                   className="w-full h-full object-cover"
@@ -203,4 +201,4 @@ const Gallery = () => {
   );
 };
 
-export default Gallery; 
+export default Gallery;

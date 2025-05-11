@@ -4,8 +4,10 @@ Pik-Cha is an image editing app that enables users to upload, transform and retr
 ## Features
 
 ### User Authentication
-Sign-Up: Create your account with email and password
-Log-In: Secure access to your dashboard
+Sign-Up: Create your account with email and password  
+
+Log-In: Secure access to your dashboard  
+
 JWT Authentication: All endpoints are protected using JWT tokens
 
 ### Image Management

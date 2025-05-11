@@ -213,12 +213,16 @@ const Dashboard = () => {
                 >
                   <img
                     src={
-                      image.original_url.startsWith('http')
-                        ? image.original_url
-                        : `${API_BASE_URL}${image.original_url}`
+                      image.transformed_url
+                        ? (image.transformed_url.startsWith('http')
+                            ? image.transformed_url
+                            : `${API_BASE_URL}${image.transformed_url}`)
+                        : (image.original_url.startsWith('http')
+                            ? image.original_url
+                            : `${API_BASE_URL}${image.original_url}`)
                     }
                     alt={image.filename}
-                    className="w-full h-full object-cover rounded-lg shadow"
+                    className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
                     <Link

@@ -53,6 +53,30 @@ const tools = [
     description: 'Convert image format',
     category: 'basic',
   },
+  {
+    name: 'Watermark',
+    icon: MdImage,
+    description: 'Add a watermark to the image',
+    category: 'effects',
+  },
+  {
+    name: 'Flip',
+    icon: MdImage,
+    description: 'Flip the image vertically',
+    category: 'basic',
+  },
+  {
+    name: 'Mirror',
+    icon: MdImage,
+    description: 'Mirror the image horizontally',
+    category: 'basic',
+  },
+  {
+    name: 'Compress',
+    icon: MdImage,
+    description: 'Compress the image with specified quality',
+    category: 'basic',
+  },
 ];
 
 const Editor = () => {
@@ -65,6 +89,7 @@ const Editor = () => {
   const [toolSettings, setToolSettings] = useState({});
   const [originalImageSize, setOriginalImageSize] = useState({ width: 0, height: 0 });
   const [initialCropSet, setInitialCropSet] = useState(false);
+  const [transformationQueue, setTransformationQueue] = useState([]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -165,108 +190,75 @@ const Editor = () => {
     disabled: isProcessing,
   });
 
-  const handleTransform = async (tool, settings) => {
+  const handleTransform = (tool, settings) => {
     if (!selectedImage) return;
 
-    setIsProcessing(true);
-    try {
-      let type = tool.toLowerCase();
-      let options = {};
+    let type = tool.toLowerCase();
+    let options = {};
 
-      // Map tool names to backend types and required options
-      switch (type) {
-        case 'resize':
-          options = {
-            width: Number(settings.width),
-            height: Number(settings.height),
-          };
-          if (!options.width || !options.height || options.width <= 0 || options.height <= 0) {
-            toast.error('Please enter valid width and height.');
-            setIsProcessing(false);
-            return;
-          }
-          break;
-        case 'crop':
-          options = {
-            left: Number(settings.left),
-            top: Number(settings.top),
-            right: Number(settings.right),
-            bottom: Number(settings.bottom),
-          };
-          if (
-            isNaN(options.left) ||
-            isNaN(options.top) ||
-            isNaN(options.right) ||
-            isNaN(options.bottom)
-          ) {
-            toast.error('Please enter valid crop values.');
-            setIsProcessing(false);
-            return;
-          }
-          break;
-        case 'rotate':
-          type = 'rotate';
-          options = {
-            angle: Number(settings.angle) || 90,
-          };
-          if (isNaN(options.angle)) {
-            toast.error('Please enter a valid angle.');
-            setIsProcessing(false);
-            return;
-          }
-          break;
-        case 'remove background':
-        case 'remove_bg':
-          type = 'remove_bg';
-          options = {};
-          break;
-        case 'format':
-          options = {
-            format: settings.format || 'png',
-          };
-          break;
-        case 'filters':
-        case 'filter':
-          type = 'filter';
-          options = {
-            filter: settings.filter || 'grayscale',
-          };
-          break;
-        default:
-          break;
-      }
-
-      const payload = { type, options };
-      console.log('Transform payload:', payload);
-      const imageId = transformedImage?.id || selectedImage.id;
-      const response = await fetch(`${API_BASE_URL}/api/images/${imageId}/transform`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        let errorMsg = 'Transformation failed';
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.error || errorMsg;
-        } catch (e) {}
-        toast.error(errorMsg);
-        setIsProcessing(false);
-        return;
-      }
-
-      const data = await response.json();
-      setTransformedImage(data);
-      toast.success('Image transformed successfully!');
-    } catch (error) {
-      toast.error(error.message || 'Failed to transform image');
-    } finally {
-      setIsProcessing(false);
+    // Map tool names to backend types and required options
+    switch (type) {
+      case 'resize':
+        options = {
+          width: Number(settings.width),
+          height: Number(settings.height),
+        };
+        break;
+      case 'crop':
+        options = {
+          left: Number(settings.left),
+          top: Number(settings.top),
+          right: Number(settings.right),
+          bottom: Number(settings.bottom),
+        };
+        break;
+      case 'rotate':
+        options = {
+          angle: Number(settings.angle) || 90,
+        };
+        break;
+      case 'remove background':
+      case 'remove_bg':
+        type = 'remove_bg';
+        options = {};
+        break;
+      case 'format':
+        options = {
+          format: settings.format || 'png',
+        };
+        break;
+      case 'filters':
+      case 'filter':
+        type = 'filter';
+        options = {
+          filter: settings.filter || 'grayscale',
+        };
+        break;
+      case 'watermark':
+        options = {
+          text: settings.text || 'Pik-Cha',
+        };
+        break;
+      case 'flip':
+        type = 'flip';
+        options = {};
+        break;
+      case 'mirror':
+        type = 'mirror';
+        options = {};
+        break;
+      case 'compress':
+        options = {
+          quality: Number(settings.quality) || 75,
+        };
+        break;
+      default:
+        break;
     }
+
+    // Add the transformation to the queue
+    setTransformationQueue((prevQueue) => [...prevQueue, { type, options }]);
+    toast.success(`${tool} transformation added to the queue!`);
   };
 
   const handleDownload = async () => {
@@ -296,6 +288,42 @@ const Editor = () => {
       toast.success('Image downloaded successfully!');
     } catch (error) {
       toast.error(error.message || 'Failed to download image');
+    }
+  };
+
+  const handleSave = async () => {
+    if (!transformationQueue.length) {
+      toast.error('No transformations to save!');
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const imageId = transformedImage?.id || selectedImage.id;
+      const payload = { transformations: transformationQueue };
+
+      const response = await fetch(`${API_BASE_URL}/api/images/${imageId}/transform`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save transformations');
+      }
+
+      const data = await response.json();
+      setTransformedImage(data);
+      setTransformationQueue([]); // Clear the queue after saving
+      toast.success('Transformations saved successfully!');
+    } catch (error) {
+      toast.error(error.message || 'Failed to save transformations');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -531,6 +559,34 @@ const Editor = () => {
                             </div>
                           </>
                         )}
+                        {activeTool.name === 'Watermark' && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Watermark Text</label>
+                            <input
+                              type="text"
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                              value={toolSettings.text || ''}
+                              onChange={(e) => setToolSettings({ ...toolSettings, text: e.target.value })}
+                            />
+                          </div>
+                        )}
+                        {activeTool.name === 'Compress' && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700">Quality (1-100)</label>
+                            <input
+                              type="number"
+                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                              value={toolSettings.quality || 75}
+                              onChange={(e) => setToolSettings({ ...toolSettings, quality: e.target.value })}
+                            />
+                          </div>
+                        )}
+                        {activeTool.name === 'Flip' && (
+                          <div className="text-sm text-gray-500">No settings required. Just click Apply!</div>
+                        )}
+                        {activeTool.name === 'Mirror' && (
+                          <div className="text-sm text-gray-500">No settings required. Just click Apply!</div>
+                        )}
                       </div>
 
                       <div className="mt-6">
@@ -541,10 +597,30 @@ const Editor = () => {
                         >
                           {isProcessing ? 'Processing...' : 'Apply'}
                         </button>
+                        <button
+                          onClick={handleSave}
+                          disabled={isProcessing || !transformationQueue.length}
+                          className="w-full mt-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
+                        >
+                          {isProcessing ? 'Saving...' : 'Save All Transformations'}
+                        </button>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
+
+                {transformationQueue.length > 0 && (
+                  <div className="mt-4 p-4 bg-gray-50 rounded-xl">
+                    <h3 className="font-medium text-gray-900 mb-2">Queued Transformations</h3>
+                    <ul className="list-disc list-inside text-sm text-gray-700">
+                      {transformationQueue.map((transformation, index) => (
+                        <li key={index}>
+                          {transformation.type} - {JSON.stringify(transformation.options)}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -571,4 +647,4 @@ const Editor = () => {
   );
 };
 
-export default Editor; 
+export default Editor;

@@ -172,118 +172,103 @@ class TransformImageResource(Resource):
 
             data = request.get_json()
             print('Transform endpoint received data:', data, flush=True)  # Debug print
-            transformation = data.get("type")
-            options = data.get("options", {})
+            transformations = data.get("transformations", [])  # Expecting a list of transformations
+
+            if not transformations:
+                return {"error": "No transformations provided"}, 400
 
             original_path = os.path.join(app.config["UPLOAD_FOLDER"], image.filename)
             pil_image = PILImage.open(original_path)
 
             metadata = image.image_metadata or {}
 
-            if transformation == "resize":
-                width = int(options.get("width", pil_image.width))
-                height = int(options.get("height", pil_image.height))
-                pil_image = pil_image.resize((width, height))
-                metadata.update({"width": width, "height": height})
+            # Apply each transformation in sequence
+            for transformation in transformations:
+                type = transformation.get("type")
+                options = transformation.get("options", {})
 
-            elif transformation == "crop":
-                left = int(options.get("left", 0))
-                top = int(options.get("top", 0))
-                right = int(options.get("right", pil_image.width))
-                bottom = int(options.get("bottom", pil_image.height))
-                pil_image = pil_image.crop((left, top, right, bottom))
-                metadata.update({"crop_box": [left, top, right, bottom]})
+                if type == "resize":
+                    width = int(options.get("width", pil_image.width))
+                    height = int(options.get("height", pil_image.height))
+                    pil_image = pil_image.resize((width, height))
+                    metadata.update({"width": width, "height": height})
 
-            elif transformation == "rotate":
-                angle = int(options.get("angle", 0))
-                pil_image = pil_image.rotate(angle, expand=True)
-                metadata.update({"rotation_angle": angle})
+                elif type == "crop":
+                    left = int(options.get("left", 0))
+                    top = int(options.get("top", 0))
+                    right = int(options.get("right", pil_image.width))
+                    bottom = int(options.get("bottom", pil_image.height))
+                    pil_image = pil_image.crop((left, top, right, bottom))
+                    metadata.update({"crop_box": [left, top, right, bottom]})
 
-            elif transformation == "watermark":
-                from PIL import ImageDraw, ImageFont
-                draw = ImageDraw.Draw(pil_image)
-                font = ImageFont.load_default()
-                text = options.get("text", "Pik-Cha")
-                draw.text((10, 10), text, fill="white", font=font)
-                metadata.update({"watermark": text})
+                elif type == "rotate":
+                    angle = int(options.get("angle", 0))
+                    pil_image = pil_image.rotate(angle, expand=True)
+                    metadata.update({"rotation_angle": angle})
 
-            elif transformation == "flip":
-                from PIL import ImageOps
-                pil_image = ImageOps.flip(pil_image)
-                metadata.update({"flipped": True})
+                elif type == "watermark":
+                    from PIL import ImageDraw, ImageFont
+                    draw = ImageDraw.Draw(pil_image)
+                    font = ImageFont.load_default()
+                    text = options.get("text", "Pik-Cha")
+                    draw.text((10, 10), text, fill="white", font=font)
+                    metadata.update({"watermark": text})
 
-            elif transformation == "mirror":
-                from PIL import ImageOps
-                pil_image = ImageOps.mirror(pil_image)
-                metadata.update({"mirrored": True})
+                elif type == "flip":
+                    from PIL import ImageOps
+                    pil_image = ImageOps.flip(pil_image)
+                    metadata.update({"flipped": True})
 
-            elif transformation == "compress":
-                quality = int(options.get("quality", 75))
-                metadata.update({"compressed_quality": quality})
+                elif type == "mirror":
+                    from PIL import ImageOps
+                    pil_image = ImageOps.mirror(pil_image)
+                    metadata.update({"mirrored": True})
 
-            elif transformation == "format":
-                fmt = options.get("format", "JPEG").upper()
-                metadata.update({"format": fmt})
-                ext = fmt.lower()
-                if ext == "jpeg":
-                    ext = "jpg"
-                # Convert to RGB if saving as JPEG/JPG
-                if ext in ["jpeg", "jpg"]:
-                    pil_image = pil_image.convert("RGB")
+                elif type == "compress":
+                    quality = int(options.get("quality", 75))
+                    metadata.update({"compressed_quality": quality})
 
-            elif transformation == "filter":
-                from PIL import ImageOps
-                filter_type = options.get("filter")
-                if filter_type == "grayscale":
-                    pil_image = ImageOps.grayscale(pil_image)
-                elif filter_type == "sepia":
-                    sepia = pil_image.convert("RGB")
-                    pixels = sepia.load()
-                    for y in range(sepia.height):
-                        for x in range(sepia.width):
-                            r, g, b = pixels[x, y]
-                            tr = int(0.393 * r + 0.769 * g + 0.189 * b)
-                            tg = int(0.349 * r + 0.686 * g + 0.168 * b)
-                            tb = int(0.272 * r + 0.534 * g + 0.131 * b)
-                            pixels[x, y] = (min(255, tr), min(255, tg), min(255, tb))
-                    pil_image = sepia
-                metadata.update({"filter": filter_type})
+                elif type == "format":
+                    fmt = options.get("format", "JPEG").upper()
+                    metadata.update({"format": fmt})
+                    ext = fmt.lower()
+                    if ext == "jpeg":
+                        ext = "jpg"
+                    # Convert to RGB if saving as JPEG/JPG
+                    if ext in ["jpeg", "jpg"]:
+                        pil_image = pil_image.convert("RGB")
 
-            elif transformation == "remove_bg":
-                img_bytes = BytesIO()
-                pil_image.save(img_bytes, format="PNG")
-                output_bytes = remove(img_bytes.getvalue())
-                pil_image = PILImage.open(BytesIO(output_bytes)).convert("RGBA")
-                metadata.update({"background_removed": True})
+                elif type == "filter":
+                    from PIL import ImageOps
+                    filter_type = options.get("filter")
+                    if filter_type == "grayscale":
+                        pil_image = ImageOps.grayscale(pil_image)
+                    elif filter_type == "sepia":
+                        sepia = pil_image.convert("RGB")
+                        pixels = sepia.load()
+                        for y in range(sepia.height):
+                            for x in range(sepia.width):
+                                r, g, b = pixels[x, y]
+                                tr = int(0.393 * r + 0.769 * g + 0.189 * b)
+                                tg = int(0.349 * r + 0.686 * g + 0.168 * b)
+                                tb = int(0.272 * r + 0.534 * g + 0.131 * b)
+                                pixels[x, y] = (min(255, tr), min(255, tg), min(255, tb))
+                        pil_image = sepia
+                    metadata.update({"filter": filter_type})
 
-            else:
-                return {"error": f"Unsupported transformation type: {transformation}"}, 400
+                elif type == "remove_bg":
+                    img_bytes = BytesIO()
+                    pil_image.save(img_bytes, format="PNG")
+                    output_bytes = remove(img_bytes.getvalue())
+                    pil_image = PILImage.open(BytesIO(output_bytes)).convert("RGBA")
+                    metadata.update({"background_removed": True})
 
-            # --- Crop validation ---
-            if transformation == "crop":
-                left = options.get("left")
-                top = options.get("top")
-                right = options.get("right")
-                bottom = options.get("bottom")
-                width, height = pil_image.size
-                if not (0 <= left < right <= width and 0 <= top < bottom <= height):
-                    return {"error": f"Crop box must be within image bounds (0,0,{width},{height}) and left < right, top < bottom."}, 400
+                else:
+                    return {"error": f"Unsupported transformation type: {type}"}, 400
 
-            # --- Resize validation ---
-            if transformation == "resize":
-                width_opt = options.get("width")
-                height_opt = options.get("height")
-                if not (width_opt > 0 and height_opt > 0):
-                    return {"error": "Width and height must be positive numbers."}, 400
-
-            # --- Rotate validation ---
-            if transformation == "rotate":
-                angle = options.get("angle")
-                if angle is None or not isinstance(angle, (int, float)):
-                    return {"error": "Angle must be a number."}, 400
-
-            ext = "png" if transformation == "remove_bg" else (ext if transformation == "format" else "jpg")
-            new_filename = f"{image.id}_{transformation}.{ext}"
+            # Save the final transformed image
+            ext = "png" if "remove_bg" in [t["type"] for t in transformations] else "jpg"
+            new_filename = f"{image.id}_transformed.{ext}"
             transformed_path = os.path.join(app.config["UPLOAD_FOLDER"], new_filename)
 
             print(f"Saving image: mode={pil_image.mode}, size={pil_image.size}, ext={ext}", flush=True)
@@ -295,12 +280,15 @@ class TransformImageResource(Resource):
                 print(f"Save error: {e}", flush=True)
                 return {"error": str(e)}, 400
 
+            if not os.path.exists(transformed_path):
+                print(f"Error: Transformed file not found at {transformed_path}", flush=True)
+
             new_image = Image(
                 user_id=user.id,
                 filename=new_filename,
-                original_url=image.original_url,
-                transformed_url=f"/uploads/{new_filename}",
-                transformation_type=transformation,
+                original_url=image.original_url,  # Keep the original image's URL
+                transformed_url=f"/uploads/{new_filename}",  # Ensure this matches the actual file path
+                transformation_type="multiple",  # Indicate multiple transformations
                 image_metadata=metadata,
                 is_transformed=True,
             )
@@ -316,7 +304,7 @@ class TransformImageResource(Resource):
 class DownloadImageResource(Resource):
     def get(self, filename):
         try:
-            return send_from_directory(app.config["UPLOAD_FOLDER"], filename, as_attachment=True)
+            return send_from_directory(app.config["UPLOAD_FOLDER"], filename, as_attachment=False)
         except FileNotFoundError:
             return {"error": "File not found"}, 404
         

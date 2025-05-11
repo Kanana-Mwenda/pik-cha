@@ -52,11 +52,12 @@ git clone https://github.com/yourusername/pik-cha.git
 cd pik-cha
 
 ### Install dependencies:
-
+(client)
 cd client
 
 npm install
 
+(server)
 cd server
 
 pipenv install && pipenv shell
@@ -65,11 +66,11 @@ pip install -r requirements.txt
 
 ### Start the development server:
 
-cd server
-flask run
+-cd server
+-flask run
 
-cd client
-npm run dev
+-cd client
+-npm run dev
 
 ## Technologies used
 

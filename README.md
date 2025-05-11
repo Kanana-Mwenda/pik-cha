@@ -1,4 +1,4 @@
-# pik-cha
+# Pik-cha
 Pik-Cha is an image editing app that enables users to upload, transform and retrieve images in various formats. It supports essential editing features like crop, resize, rotate, flip, filters, watermarking and even automatic background removal — all in a clean React interface with secure user authentication.
 
 ## Features
@@ -52,14 +52,19 @@ git clone https://github.com/yourusername/pik-cha.git
 cd pik-cha
 
 -Install dependencies:
+
 cd client
+
 npm install
 
 cd server
+
 pipenv install && pipenv shell
+
 pip install -r requirements.txt
 
 -Start the development server:
+
 cd server
 flask run
 

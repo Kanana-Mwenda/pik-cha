@@ -1,0 +1,11 @@
+Pik-Cha Presentation Theme Guide
+
+- Background: Linear gradient from #6366f1 (indigo) to #a21caf (purple) to #06b6d4 (cyan)
+- Headings: Orbitron font, bold, white or dark indigo
+- Body: Inter font, white or dark gray
+- Logo: Pik-Cha SVG logo (triangle with gradient) in top left of every slide
+- Accent: Use rounded rectangles, soft drop shadows, and modern icons
+- Buttons: Gradient fill, white text, rounded corners
+- Slide layout: Clean, lots of whitespace, large headings
+- Use icons for features, tech stack, and demo steps
+- Consistent color palette: #6366f1, #a21caf, #06b6d4, #fff, #222 

@@ -16,6 +16,7 @@ class Image(db.Model):
     transformation_type = db.Column(db.String)  # e.g., 'resize', 'crop', etc.
     image_metadata = db.Column(db.JSON)  # e.g., {"width": 300, "height": 200}
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_transformed = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         return f"<Image {self.filename} by User {self.user_id}>"

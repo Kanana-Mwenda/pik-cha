@@ -77,6 +77,7 @@ class UploadImageResource(Resource):
                     filename=unique_name,
                     original_url=f"/uploads/{unique_name}",
                     image_metadata=metadata,
+                    is_transformed=False,
                 )
 
                 db.session.add(new_image)
@@ -110,7 +111,7 @@ class ListImagesResource(Resource):
                 print(f"User not found for user_id: {user_id}")
                 return {"error": "User not found"}, 404
 
-            images = Image.query.filter_by(user_id=user_id).all()
+            images = Image.query.filter_by(user_id=user_id, is_transformed=True).all()
             print(f"Found {len(images)} images for user {user_id}")
             
             serialized_images = []
@@ -143,6 +144,7 @@ class ListImagesResource(Resource):
                     continue
             
             print(f"Returning {len(serialized_images)} serialized images")
+            print("Serialized images:", serialized_images, flush=True)
             return serialized_images, 200
 
         except Exception as e:
@@ -294,12 +296,13 @@ class TransformImageResource(Resource):
                 return {"error": str(e)}, 400
 
             new_image = Image(
-                user_id=image.user_id,
+                user_id=user.id,
                 filename=new_filename,
-                original_url=image.original_url,  # Keep the original image's URL
+                original_url=image.original_url,
                 transformed_url=f"/uploads/{new_filename}",
                 transformation_type=transformation,
                 image_metadata=metadata,
+                is_transformed=True,
             )
             db.session.add(new_image)
             db.session.commit()

@@ -46,12 +46,12 @@ List Images: Browse all your uploaded images in the gallery
 
 ## Installation
 
--Clone the repository:
+### Clone the repository:
 
 git clone https://github.com/yourusername/pik-cha.git  
 cd pik-cha
 
--Install dependencies:
+### Install dependencies:
 
 cd client
 
@@ -63,7 +63,7 @@ pipenv install && pipenv shell
 
 pip install -r requirements.txt
 
--Start the development server:
+### Start the development server:
 
 cd server
 flask run
@@ -72,6 +72,7 @@ cd client
 npm run dev
 
 ## Technologies used
+
 ### Front-end
 -HTML CSS Tailwind
 

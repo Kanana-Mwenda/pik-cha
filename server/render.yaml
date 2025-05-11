@@ -5,7 +5,7 @@ services:
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
-    startCommand: gunicorn "server.config:create_app('production')"
+    startCommand: gunicorn "server.app:app" --bind 0.0.0.0:$PORT
     envVars:
       - key: FLASK_SECRET_KEY
         generateValue: true
@@ -17,6 +17,8 @@ services:
           property: connectionString
       - key: PYTHON_VERSION
         value: 3.11.11
+      - key: FLASK_ENV
+        value: production
 
 databases:
   - name: pik-cha-db

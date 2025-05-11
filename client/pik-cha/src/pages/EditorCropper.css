@@ -1,0 +1,4 @@
+.custom-crop-area {
+  border: 2px solid #6366f1 !important; /* Indigo border for visibility */
+  box-shadow: 0 0 0 1px #fff, 0 0 0 2px #6366f1;
+} 

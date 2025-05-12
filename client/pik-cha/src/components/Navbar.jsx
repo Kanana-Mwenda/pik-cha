@@ -101,7 +101,7 @@ const Navbar = () => {
                   className="flex items-center space-x-2 px-4 py-2 rounded-md bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700 transition-colors text-sm"
                 >
                   <UserCircleIcon className="h-5 w-5 text-white" />
-                  <span>Login / Sign Up</span>
+                  <span>Login</span>
                 </Link>
               </div>
             )}

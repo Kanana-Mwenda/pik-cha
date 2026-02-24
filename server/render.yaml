@@ -4,7 +4,7 @@ services:
     region: oregon
     runtime: python
     buildCommand: "pip install --upgrade pip && pip install -r requirements.txt"
-    startCommand: "gunicorn \"server.app:app\" --bind 0.0.0.0:$PORT"
+    startCommand: "gunicorn \"app:app\" --bind 0.0.0.0:$PORT"
     envVars:
       - key: FLASK_SECRET_KEY
         generateValue: true
@@ -19,6 +19,6 @@ services:
       - key: FLASK_ENV
         value: production
       - key: PYTHONPATH
-        value: .
-    autoDeploy: false
+        value: /opt/render/project/src
+    autoDeploy: true
 

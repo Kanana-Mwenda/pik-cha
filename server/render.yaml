@@ -19,6 +19,8 @@ services:
         value: 3.11.11
       - key: FLASK_ENV
         value: production
+      - key: PYTHONPATH
+        value: .
 
 databases:
   - name: pik-cha-db

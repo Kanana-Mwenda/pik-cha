@@ -19,6 +19,6 @@ services:
       - key: FLASK_ENV
         value: production
       - key: PYTHONPATH
-        value: /opt/render/project/src
+        value: /opt/render/project/src/pik-cha
     autoDeploy: true
 

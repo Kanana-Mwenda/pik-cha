@@ -3,8 +3,14 @@ services:
     name: pik-cha-backend
     region: oregon
     runtime: python
-    buildCommand: "pip install --upgrade pip && pip install -r server/requirements.txt"
-    startCommand: "gunicorn \"server.app:app\" --bind 0.0.0.0:$PORT"
+    buildCommand: |
+      pip install --upgrade pip && pip install -r server/requirements.txt
+      # install the server package so it's importable
+      pip install -e server
+    startCommand: |
+      # make sure the repo root is on the path and then launch gunicorn
+      cd /opt/render/project/src
+      gunicorn "server.app:app" --bind 0.0.0.0:$PORT
     envVars:
       - key: FLASK_SECRET_KEY
         generateValue: true

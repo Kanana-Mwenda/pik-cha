@@ -4,13 +4,13 @@ services:
     region: oregon
     runtime: python
     buildCommand: |
-      pip install --upgrade pip && pip install -r server/requirements.txt
-      # install the server package so it's importable
-      pip install -e server
+      cd /opt/render/project/src/server
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      pip install -e .
     startCommand: |
-      # make sure the repo root is on the path and then launch gunicorn
-      cd /opt/render/project/src
-      gunicorn "server.app:app" --bind 0.0.0.0:$PORT
+      cd /opt/render/project/src/server
+      gunicorn "app:app" --bind 0.0.0.0:$PORT
     envVars:
       - key: FLASK_SECRET_KEY
         generateValue: true
@@ -25,6 +25,6 @@ services:
       - key: FLASK_ENV
         value: production
       - key: PYTHONPATH
-        value: /opt/render/project/src
+        value: /opt/render/project/src/server
     autoDeploy: true
 

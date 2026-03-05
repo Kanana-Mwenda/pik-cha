@@ -9,8 +9,8 @@ services:
       pip install -r requirements.txt
       pip install -e .
     startCommand: |
-      cd /opt/render/project/src/server
-      gunicorn "app:app" --bind 0.0.0.0:$PORT
+      cd /opt/render/project/src
+      gunicorn "server.app:app" --bind 0.0.0.0:$PORT
     envVars:
       - key: FLASK_SECRET_KEY
         generateValue: true

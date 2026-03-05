@@ -25,6 +25,6 @@ services:
       - key: FLASK_ENV
         value: production
       - key: PYTHONPATH
-        value: /opt/render/project/src/server
+        value: /opt/render/project/src
     autoDeploy: true
 
